@@ -5,8 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="484f58e2-9683-44df-bc76-dd5c371668f2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/lib/screens/connect_partner_screen.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/images/seedling_placeholder.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/screens/connect_complete_screen.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,6 +70,8 @@
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\ahdtl\StudioProjects\growtogether\assets\images" />
+      <recent name="C:\Users\ahdtl\StudioProjects\growtogether\assets\seedling_placeholder" />
+      <recent name="C:\Users\ahdtl\StudioProjects\growtogether\assets\imagesseedling_placeholder" />
     </key>
   </component>
   <component name="RunManager">
