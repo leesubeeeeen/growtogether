@@ -11,8 +11,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.20.2
+  table_calendar: ^3.0.9
 
-  cupertino_icons: ^1.0.2
+flutter_intl:
+  enabled: true
 
 dev_dependencies:
   flutter_test:
