@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'add_schedule_bottom_screen.dart';
 
 class SchedulePreferencePage extends StatefulWidget {
   @override
@@ -9,14 +10,7 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
   final Color mainColor = Color(0xFFD26A5C);
   final TextEditingController _nicknameController = TextEditingController();
 
-  // 간단한 스케줄 예시 리스트
-  List<Map<String, String>> schedules = [
-    {
-      'title': '회사 출근',
-      'time': '오전 9시 - 오후 6시',
-      'days': '평일 (월, 화, 수, 목, 금)',
-    },
-  ];
+  List<Map<String, String>> schedules = [];
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +19,7 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -37,8 +29,6 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            // 제목
             Center(
               child: Text(
                 '함께 키우기 위한\n첫 걸음을 시작해볼까요?',
@@ -51,20 +41,14 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
                 ),
               ),
             ),
-
             SizedBox(height: 32),
-
-            // 1단계 - 애칭 입력
             Row(
               children: [
                 Icon(Icons.looks_one, color: mainColor),
                 SizedBox(width: 8),
                 Text(
                   '상대방의 애칭을 정해주세요',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -82,30 +66,38 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
                 ),
               ),
             ),
-
             SizedBox(height: 32),
-
-            // 2단계 - 스케줄
             Row(
               children: [
                 Icon(Icons.looks_two, color: mainColor),
                 SizedBox(width: 8),
                 Text(
                   '고정적인 스케줄이 있나요?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
             SizedBox(height: 12),
-
-            // 추가 버튼
             ElevatedButton.icon(
               onPressed: () {
-                // TODO: 일정 추가 기능
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (context) {
+                    return AddScheduleBottomScreen(
+                      onScheduleAdded: (newSchedule) {
+                        setState(() {
+                          schedules.add(newSchedule); // ✅ 리스트에 추가
+                        });
+                      },
+                    );
+                  },
+                );
               },
+
               icon: Icon(Icons.add),
               label: Text('추가'),
               style: ElevatedButton.styleFrom(
@@ -119,10 +111,7 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
                 ),
               ),
             ),
-
             SizedBox(height: 20),
-
-            // 스케줄 카드들
             ...schedules.map((schedule) => Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Container(
@@ -145,40 +134,29 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
                       children: [
                         Icon(Icons.lightbulb_outline, color: mainColor),
                         SizedBox(width: 8),
-                        Text(
-                          schedule['title'] ?? '',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                        Text(schedule['title'] ?? '', style: TextStyle(fontSize: 16)),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.access_time, color: mainColor),
-                        SizedBox(width: 8),
-                        Text(
-                          schedule['time'] ?? '',
-                          style: TextStyle(fontSize: 15),
-                        ),
+                        Icon(Icons.calendar_today, color: mainColor, size: 16),
+                        SizedBox(width: 4),
+                        Text(schedule['time'] ?? ''),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.refresh, color: mainColor),
-                        SizedBox(width: 8),
-                        Text(
-                          schedule['days'] ?? '',
-                          style: TextStyle(fontSize: 15),
-                        ),
+                        Icon(Icons.sync, color: mainColor, size: 16),
+                        SizedBox(width: 4),
+                        Text(schedule['days'] ?? ''),
                       ],
                     ),
                   ],
                 ),
               ),
-            )).toList(),
-
-            SizedBox(height: 60),
+            ))
           ],
         ),
       ),
