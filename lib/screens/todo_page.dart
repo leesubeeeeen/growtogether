@@ -13,6 +13,7 @@ class TodoPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Palette.background,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Palette.background,
         elevation: 0,
         toolbarHeight: 100,
