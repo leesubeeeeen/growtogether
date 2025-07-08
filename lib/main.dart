@@ -3,6 +3,7 @@ import 'screens/calendar_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/home_page.dart';
 import 'screens/counselor_selection_page.dart';
+import 'screens/counselor_chat_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return  MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: CounselorSelectionPage(),
+      home: CounselorChatPage(),
     );
   }
 }
