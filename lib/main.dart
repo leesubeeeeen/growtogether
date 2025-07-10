@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/chat_advice_page.dart'; // ← 이 경로 맞는지 꼭 확인
-
+import 'screens/connect_complete_screen.dart';
 void main() {
   runApp(const GrowTogetherApp());
 }
@@ -19,7 +19,7 @@ class GrowTogetherApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
         useMaterial3: true,
       ),
-      home: const ChatAdvicePage(), // 앱 시작 시 보여줄 화면
+      home: const ConnectCompleteScreen(), // 앱 시작 시 보여줄 화면
     );
   }
 }

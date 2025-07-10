@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'schedule_preference_page.dart'; // 요거 추가
 
 class ConnectCompleteScreen extends StatelessWidget {
   const ConnectCompleteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ✅ 여기서 2초 후 자동 이동
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SchedulePreferencePage()),
+      );
+    });
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -23,7 +32,7 @@ class ConnectCompleteScreen extends StatelessWidget {
               SizedBox(
                 width: 180,
                 child: Image.asset(
-                  'assets/images/seedling_placeholder.png', // 나중에 교체할 이미지
+                  'assets/images/seedling_placeholder.png',
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return const Text(
