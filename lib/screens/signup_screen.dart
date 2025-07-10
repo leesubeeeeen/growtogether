@@ -121,7 +121,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 height: 55,
                 child: ElevatedButton(
                   onPressed: () {
-                    print('회원가입 시도');
+                    print('계정 만들기');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: mainColor,
