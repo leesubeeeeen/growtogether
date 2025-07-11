@@ -5,10 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="484f58e2-9683-44df-bc76-dd5c371668f2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/lib/screens/home_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/widgets/schedule_card.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screens/home_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/home_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screens/todo_ai_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/todo_ai_page.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/screens/todo_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/todo_page.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -33,12 +33,20 @@
     </leaf>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="feature/ai-chat" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3
 }</component>
   <component name="ProjectId" id="2ytgaOm7cvfhX4YtCvwIhDS0V6p" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1" />
     <panes>
@@ -62,7 +70,8 @@
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "feature/todo-ui",
+    "git-widget-placeholder": "feature/homepage",
+    "io.flutter.reload.alreadyRun": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/ahdtl/StudioProjects/growtogether",
     "show.migrate.to.gradle.popup": "false"

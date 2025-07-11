@@ -61,12 +61,9 @@ class TodoPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 24.0, right: 16.0),
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TodoAiPage()),
-                );
-              },
+                onPressed: () {
+                  Navigator.pushNamed(context, '/todo-ai'); // ✅ TodoAiPage로 이동
+                },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.buttonBg,
                 shape: RoundedRectangleBorder(
@@ -99,6 +96,15 @@ class TodoPage extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Palette.mainRed,
         unselectedItemColor: Palette.greyText,
+        onTap: (index) {
+          switch (index) {
+            case 0: break; // 캘린더 (아직 기능 없음)
+            case 1: break; // 현재 페이지
+            case 2: Navigator.pushNamed(context, '/'); break; // ✅ HomePage
+            case 3: break; // 검색
+            case 4: Navigator.pushNamed(context, '/chat'); break; // ✅ ChatAdvicePage
+          }
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.check_box), label: ''),

@@ -17,11 +17,7 @@ class _HomePageState extends State<HomePage> {
 
   void _onItemTapped(int index) {
     if (index == 1) {
-      // 체크 아이콘 (To-do 페이지) 클릭 시
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const TodoPage()),
-      );
+      Navigator.pushNamed(context, '/todo'); // ✅ TodoPage로 이동
     } else {
       setState(() {
         _currentIndex = index;
@@ -29,13 +25,26 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Palette.background,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: _onItemTapped,
+        onTap: (index) {
+          if (index == 1) {
+            Navigator.pushNamed(context, '/todo');
+          } else if (index == 2) {
+            // 현재 페이지(HomePage)
+          } else if (index == 4) {
+            Navigator.pushNamed(context, '/chat'); // ✅ ChatAdvicePage
+          } else {
+            setState(() {
+              _currentIndex = index;
+            });
+          }
+        },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Palette.mainRed,
         unselectedItemColor: Palette.greyText,
@@ -47,6 +56,7 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
         ],
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

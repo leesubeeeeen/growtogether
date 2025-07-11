@@ -26,10 +26,19 @@ class _TodoAiPageState extends State<TodoAiPage> {
     return Scaffold(
       backgroundColor: Palette.background,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
+        currentIndex: 2, // 선택 인덱스 설정 필요 시 조정
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Palette.mainRed,
         unselectedItemColor: Palette.greyText,
+        onTap: (index) {
+          switch (index) {
+            case 0: break;
+            case 1: Navigator.pushNamed(context, '/todo'); break; // ✅ ToDoPage
+            case 2: Navigator.pushNamed(context, '/'); break;     // ✅ HomePage
+            case 3: break;
+            case 4: Navigator.pushNamed(context, '/chat'); break; // ✅ Chat
+          }
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.check_box), label: ''),
