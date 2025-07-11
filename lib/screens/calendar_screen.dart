@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:growtogether/screens/todo_page.dart';
+import 'package:growtogether/screens/home_page.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({Key? key}) : super(key: key);
@@ -100,12 +102,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
+        currentIndex: 0, // 현재 캘린더 페이지라면 0
         selectedItemColor: mainColor,
         unselectedItemColor: Colors.grey[400],
         showSelectedLabels: false,
         showUnselectedLabels: false,
         type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == 1) {
+            // 체크 (To-do)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const TodoPage()),
+            );
+          } else if (index == 2) {
+            // 홈
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            );
+          }
+          // index 0 (캘린더), 3 (검색), 4 (내정보)는 아무것도 안 함
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: '캘린더'),
           BottomNavigationBarItem(icon: Icon(Icons.check_box), label: '체크'),
@@ -114,6 +132,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: '내정보'),
         ],
       ),
+
     );
   }
 }

@@ -26,3 +26,7 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/images/seedling_placeholder.png
+    - assets/images/counselor_1.png
+    - assets/images/counselor_2.png
+    - assets/images/counselor_3.png
+    - assets/images/plant.png

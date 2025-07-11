@@ -5,20 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="484f58e2-9683-44df-bc76-dd5c371668f2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/lib/screens/chat_advice_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/screens/counselor_chat_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/screens/counselor_selection_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/screens/home_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/screens/todo_ai_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/screens/todo_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/theme/fonts.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/theme/palette.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/widgets/calendar_box.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/widgets/calendar_day_item.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/widgets/mood_box.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/widgets/schedule_card.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/widgets/schedule_item.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screens/calendar_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screens/calendar_screen.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
