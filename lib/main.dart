@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const HomePage(),
         '/todo': (context) => const TodoPage(),
         '/todo-ai': (context) => const TodoAiPage(),
+        //'/chat': (context) => const ChatAdvicePage(),
       },
     );
   }
