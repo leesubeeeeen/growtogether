@@ -14,6 +14,7 @@ dependencies:
   intl: ^0.20.2
   table_calendar: ^3.0.9
   http: ^0.13.5
+  provider: ^6.1.1
 
 flutter_intl:
   enabled: true
@@ -21,6 +22,7 @@ flutter_intl:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
 
 flutter:
   uses-material-design: true

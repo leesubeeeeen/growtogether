@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:growtogether/pages/gpt_test_page.dart';
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
-import 'screens/calendar_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
@@ -25,10 +25,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return  MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: CalendarScreen(),
+      home: GPTTestPage(),
     );
   }
 
 }
-//
-//StartScreen()
