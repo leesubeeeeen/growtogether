@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import 'dart:async';
+import '../widgets/bottom_navi_bar.dart';
 
 class ChatAdvicePage extends StatefulWidget {
   const ChatAdvicePage({super.key});
@@ -206,6 +207,7 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
           )
         ],
       ),
+      bottomNavigationBar: buildBottomNavBar(context, 3),
     );
   }
 }

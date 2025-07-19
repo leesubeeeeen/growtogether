@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/calendar_box.dart';
 import '../widgets/mood_box.dart';
 import '../theme/palette.dart';
-import '../theme/fonts.dart'; // AppFonts 정의된 파일
-import 'todo_page.dart';
+import '../theme/fonts.dart';
+import '../widgets/bottom_navi_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,40 +13,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 2;
-
-  void _onItemTapped(int index) {
-    if (index == 1) {
-      // 체크 아이콘 (To-do 페이지) 클릭 시
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const TodoPage()),
-      );
-    } else {
-      setState(() {
-        _currentIndex = index;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Palette.background,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Palette.mainRed,
-        unselectedItemColor: Palette.greyText,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.check_box), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -65,6 +36,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
+      bottomNavigationBar: buildBottomNavBar(context, 0),
     );
   }
 
