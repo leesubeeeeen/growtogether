@@ -4,6 +4,7 @@ import '../theme/fonts.dart';
 import 'todo_ai_page.dart';
 import '../widgets/calendar_day_item.dart';
 import '../widgets/schedule_item.dart';
+import '../widgets/bottom_navi_bar.dart';
 
 class TodoPage extends StatelessWidget {
   const TodoPage({super.key});
@@ -94,19 +95,7 @@ class TodoPage extends StatelessWidget {
           Expanded(child: _buildScheduleList()),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Palette.mainRed,
-        unselectedItemColor: Palette.greyText,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.check_box), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-      ),
+      bottomNavigationBar: buildBottomNavBar(context, 1),
     );
   }
 

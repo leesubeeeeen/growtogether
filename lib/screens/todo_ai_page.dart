@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
+import '../widgets/bottom_navi_bar.dart';
 
 class TodoAiPage extends StatefulWidget {
   const TodoAiPage({super.key});
@@ -25,19 +26,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Palette.background,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Palette.mainRed,
-        unselectedItemColor: Palette.greyText,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.check_box), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -253,6 +241,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
           ),
         ),
       ),
+      bottomNavigationBar: buildBottomNavBar(context, 2),
     );
   }
 }
