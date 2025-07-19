@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import '../theme/palette.dart';
+import '../providers/emotion_provider.dart';
+import 'package:provider/provider.dart';
 
-class MoodBox extends StatelessWidget {
+
+class MoodBox extends StatefulWidget {
   const MoodBox({super.key});
 
   @override
+  State<MoodBox> createState() => _MoodBoxState();
+}
+
+class _MoodBoxState extends State<MoodBox> {
+  final List<String> emojis = ['🤪', '😊', '😐', '☹️', '😭', '😮', '😡'];
+
+  @override
   Widget build(BuildContext context) {
-    final List<String> emojis = ['🤪', '😊', '😐', '☹️', '😭', '😮', '😡'];
-    final int selectedIndex = 1; // 예시: 두 번째 이모지 선택됨
+    final provider = Provider.of<EmotionProvider>(context);
+    final selectedEmoji = provider.feeling;
+    final fatigueValue = provider.fatigue;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -24,26 +35,30 @@ class MoodBox extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: emojis.asMap().entries.map((entry) {
-              final int idx = entry.key;
-              final String emoji = entry.value;
-              final bool isSelected = idx == selectedIndex;
+            children: emojis.map((emoji) {
+              final isSelected = emoji == selectedEmoji;
 
               return Expanded(
-                child: Center(
-                  child: Container(
-                    width: 40, // 안드로이드에서 안정적인 터치 크기
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSelected ? Palette.mainRed : Colors.transparent,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      emoji,
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: isSelected ? Colors.white : Colors.black,
+                child: GestureDetector(
+                  onTap: () {
+                    provider.setFeeling(emoji);
+                  },
+                  child: Center(
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                        isSelected ? Palette.mainRed : Colors.transparent,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        emoji,
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: isSelected ? Colors.white : Colors.black,
+                        ),
                       ),
                     ),
                   ),
@@ -53,19 +68,32 @@ class MoodBox extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Slider(
-            value: 0.7,
-            onChanged: (_) {},
+            value: fatigueValue,
+            onChanged: (value) {
+              provider.setFatigue(value);
+            },
             activeColor: Palette.calmYellow,
             inactiveColor: Palette.greyBorder,
           ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.bolt, color: Palette.calmYellow, size: 20),
-              SizedBox(width: 6),
-              Text('70%', style: TextStyle(fontSize: 16)),
+            children: [
+              const Icon(Icons.bolt, color: Palette.calmYellow, size: 20),
+              const SizedBox(width: 6),
+              Text('${(fatigueValue * 100).toInt()}%',
+                  style: const TextStyle(fontSize: 16)),
             ],
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () {
+              provider.saveTodayEmotion();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
+              );
+            },
+            child: const Text('저장하기'),
           ),
         ],
       ),
