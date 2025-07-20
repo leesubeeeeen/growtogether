@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../widgets/bottom_navi_bar.dart';
+import 'package:provider/provider.dart';
+import '../providers/todo_provider.dart';
+
 
 class TodoAiPage extends StatefulWidget {
   const TodoAiPage({super.key});
@@ -21,6 +24,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +203,20 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
                 // 선택 버튼 3개
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final todoText = _controller.text.trim();
+                    if (todoText.isNotEmpty) {
+                      Provider.of<TodoProvider>(context, listen: false).addTodo(todoText);
+                      _controller.clear();
+                      setState(() {
+                        _showSuggestion = false;
+                      });
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('할 일이 추가되었어요!')),
+                      );
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Palette.mainRed,
                     foregroundColor: Palette.background,
@@ -210,6 +227,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   ),
                   child: const Text('이렇게 할래요'),
                 ),
+
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {},
