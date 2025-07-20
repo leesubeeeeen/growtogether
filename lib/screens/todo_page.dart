@@ -5,6 +5,9 @@ import 'todo_ai_page.dart';
 import '../widgets/calendar_day_item.dart';
 import '../widgets/schedule_item.dart';
 import '../widgets/bottom_navi_bar.dart';
+import 'package:provider/provider.dart';
+import '../providers/todo_provider.dart';
+
 
 class TodoPage extends StatelessWidget {
   const TodoPage({super.key});
@@ -92,7 +95,7 @@ class TodoPage extends StatelessWidget {
         children: [
           _buildCalendarBar(),
           const SizedBox(height: 12),
-          Expanded(child: _buildScheduleList()),
+          Expanded(child: _buildScheduleList(context)),
         ],
       ),
       bottomNavigationBar: buildBottomNavBar(context, 1),
@@ -121,7 +124,10 @@ class TodoPage extends StatelessWidget {
 
 
 
-  Widget _buildScheduleList() {
+  Widget _buildScheduleList(BuildContext context) {
+    final todoProvider = Provider.of<TodoProvider>(context);
+    final todos = todoProvider.todos;
+
     final items = [
       ScheduleItem(
         time: '9:15 - 10:00',
@@ -152,13 +158,36 @@ class TodoPage extends StatelessWidget {
       ),
     ];
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: items.length,
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: items[index],
-      ),
+      children: [
+        ...items.map((item) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: item,
+        )),
+        const SizedBox(height: 12),
+        if (todos.isNotEmpty)
+          const Text(
+            '내가 추가한 할 일',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Palette.black,
+            ),
+          ),
+        ...todos.map((todo) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: ScheduleItem(
+            time: '시간 미정',
+            title: todo,
+            content: '사용자가 직접 추가한 일정',
+            location: '장소 없음',
+            parent: '나',
+            icon: Icons.task_alt,
+            color: Palette.greyBackground,
+          ),
+        )),
+      ],
     );
   }
 }
