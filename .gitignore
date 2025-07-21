@@ -119,3 +119,4 @@ app.*.symbols
 !/dev/ci/**/Gemfile.lock
 .idea/
 git rm -r --cached .idea
+assets/.env

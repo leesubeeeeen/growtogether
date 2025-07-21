@@ -34,7 +34,7 @@ class _GPTTestPageState extends State<GPTTestPage> {
 답변은 너무 길지 않게, 4~6문장 정도로 간결하게 해주세요.
 ''';
 
-    String result = await GPTService.getChatResponse(userInput, prompt);
+    String result = await GptService().getAnswer(userInput);
 
     setState(() {
       _response = result;
