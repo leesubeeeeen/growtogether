@@ -1,42 +1,33 @@
 ///OpenAI GPT 호출 함수
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class GPTService {
-  static const String _apiKey = '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';
-  static const String _baseUrl = 'https://api.openai.com/v1/chat/completions';
+class GptService {
+  Future<String> getAnswer(String prompt) async {
+    // 여기에 실제 GPT API 호출 코드 작성
+    final apiKey = dotenv.env['OPENAI_API_KEY'];
+    final url = Uri.parse('https://api.openai.com/v1/chat/completions');
 
-  static Future<String> getChatResponse(String userInput, String systemPrompt) async {
-    try {
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-        },
-        body: jsonEncode({
-          "model": "gpt-3.5-turbo",
-          "messages": [
-            {"role": "system", "content": systemPrompt},
-            {"role": "user", "content": userInput}
-          ],
-          "temperature": 0.7,
-          "max_tokens": 400
-        }),
-      );
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $apiKey',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "model": "gpt-3.5-turbo",
+        "messages": [
+          {"role": "user", "content": prompt}
+        ],
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        // ✅ 한글 깨짐 방지용 디코딩
-        final decodedBody = utf8.decode(response.bodyBytes);
-        final json = jsonDecode(decodedBody);
-        return json['choices'][0]['message']['content'];
-      } else {
-        print('에러 응답: ${response.body}');
-        throw Exception('GPT 응답 실패');
-      }
-    } catch (e) {
-      print('에러 발생: $e');
-      return 'GPT 응답에 실패했어요 😢';
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return json['choices'][0]['message']['content'];
+    } else {
+      return '문제가 발생했어요 😥';
     }
   }
 }
