@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/palette.dart';
+import '../theme/fonts.dart';
 
 class CounselorSelectionPage extends StatelessWidget {
   const CounselorSelectionPage({super.key});
@@ -11,7 +13,7 @@ class CounselorSelectionPage extends StatelessWidget {
     required String quote,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -38,45 +40,79 @@ class CounselorSelectionPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontFamily: AppFonts.primaryFont,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Palette.black,
+                      ),
+                    ),
                     const SizedBox(height: 4.0),
-                    Text(description, style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontFamily: AppFonts.primaryFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w300,
+                        color: Palette.greyText,
+                      ),
+                    ),
                   ],
                 ),
               )
             ],
           ),
-          const SizedBox(height: 10.0),
+          const SizedBox(height: 12.0),
           Wrap(
             spacing: 6,
-            children: hashtags.map((tag) => Text(
-              "#${tag}",
-              style: TextStyle(color: Colors.deepOrangeAccent, fontSize: 12),
-            )).toList(),
+            children: hashtags
+                .map((tag) => Text(
+              "#$tag",
+              style: TextStyle(
+                fontFamily: AppFonts.primaryFont,
+                color: Palette.mainRed,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ))
+                .toList(),
           ),
-          const SizedBox(height: 10.0),
+          const SizedBox(height: 14.0),
           Divider(color: Colors.grey[300]),
-          const SizedBox(height: 10.0),
+          const SizedBox(height: 14.0),
           Text(
-            "\"$quote\"",
+            "“$quote”",
             style: TextStyle(
-              color: Colors.grey[800],
+              fontFamily: AppFonts.primaryFont,
+              color: Colors.black87,
               fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w400,
+              height: 1.5,
             ),
           ),
-          const SizedBox(height: 16.0),
+          const SizedBox(height: 20.0),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFCE9E6),
-                foregroundColor: Colors.deepOrange,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                backgroundColor: Palette.background,
+                foregroundColor: Palette.mainRed,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
               ),
-              child: Text("같이 해볼래요", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(
+                "같이 해볼래요",
+                style: TextStyle(
+                  fontFamily: AppFonts.primaryFont,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           )
         ],
@@ -87,28 +123,40 @@ class CounselorSelectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF9F9F9),
+      backgroundColor: const Color(0xFFF9F9F9),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
           onPressed: () {},
         ),
-        title: const Text(
+        title: Text(
           '누구랑 같이 키워볼까요?',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 20),
+          style: TextStyle(
+            fontFamily: AppFonts.primaryFont,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Palette.black,
+          ),
         ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
+            const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Text(
                 'AI는 언제든 바뀔 수 있어요.\n먼저 마음에 드는 친구부터 시작해볼까요?',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                style: TextStyle(
+                  fontFamily: AppFonts.primaryFont,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                  color: Palette.greyText,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -133,6 +181,7 @@ class CounselorSelectionPage extends StatelessWidget {
               hashtags: ['육아 원리 제시', '부모와 아이를 함께 보는 시야'],
               quote: '아이 반응은 예민한 흐름일 수 있어요. 안정 루틴을 잡아볼까요?',
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
