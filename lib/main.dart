@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:growtogether/pages/gpt_test_page.dart';
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:growtogether/screens//counselor_chat_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return  MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: GPTTestPage(),
+      home: CounselorChatPage(),
     );
   }
 
