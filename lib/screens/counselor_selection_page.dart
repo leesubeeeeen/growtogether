@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
+import 'home_page.dart'; // ← 추가
+import 'counselor_1_page.dart'; // ← 추가
+import 'counselor_2_page.dart'; // ← 추가
+import 'counselor_3_page.dart'; // ← 추가
 
 class CounselorSelectionPage extends StatelessWidget {
   const CounselorSelectionPage({super.key});
@@ -11,6 +15,7 @@ class CounselorSelectionPage extends StatelessWidget {
     required String description,
     required List<String> hashtags,
     required String quote,
+    required VoidCallback onPressed, // 추가
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
@@ -40,25 +45,21 @@ class CounselorSelectionPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontFamily: AppFonts.primaryFont,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Palette.black,
-                      ),
-                    ),
+                    Text(name,
+                        style: TextStyle(
+                          fontFamily: AppFonts.primaryFont,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Palette.black,
+                        )),
                     const SizedBox(height: 4.0),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontFamily: AppFonts.primaryFont,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w300,
-                        color: Palette.greyText,
-                      ),
-                    ),
+                    Text(description,
+                        style: TextStyle(
+                          fontFamily: AppFonts.primaryFont,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w300,
+                          color: Palette.greyText,
+                        )),
                   ],
                 ),
               )
@@ -83,12 +84,12 @@ class CounselorSelectionPage extends StatelessWidget {
           Divider(color: Colors.grey[300]),
           const SizedBox(height: 14.0),
           Text(
-            "“$quote”",
+            "$quote",
             style: TextStyle(
               fontFamily: AppFonts.primaryFont,
               color: Colors.black87,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
               height: 1.5,
             ),
           ),
@@ -96,9 +97,9 @@ class CounselorSelectionPage extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: onPressed, // ← 연결
               style: ElevatedButton.styleFrom(
-                backgroundColor: Palette.background,
+                backgroundColor: Palette.softRed,
                 foregroundColor: Palette.mainRed,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
@@ -110,7 +111,7 @@ class CounselorSelectionPage extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: AppFonts.primaryFont,
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w300,
                 ),
               ),
             ),
@@ -128,15 +129,20 @@ class CounselorSelectionPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
-          onPressed: () {},
+          icon: const Icon(Icons.arrow_back_ios, color: Palette.black),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomePage()),
+            );
+          },
         ),
         title: Text(
           '누구랑 같이 키워볼까요?',
           style: TextStyle(
             fontFamily: AppFonts.primaryFont,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontSize: 28,
+            fontWeight: FontWeight.w400,
             color: Palette.black,
           ),
         ),
@@ -163,23 +169,41 @@ class CounselorSelectionPage extends StatelessWidget {
             buildProfileCard(
               imagePath: 'assets/images/counselor_1.png',
               name: '따뜻한 친정엄마',
-              description: '감정에 먼저 공감하고, 아이 중심의 부드러운 육아를 추천해요',
+              description: '감정에 먼저 공감하고, \n아이 중심의 부드러운 육아를 추천해요',
               hashtags: ['감정 중심', '실패에 위로', '부드러운 어휘 사용'],
-              quote: '괜찮아, 너도 잘하고 있어. 억지로 안 해도 괜찮단다 :)',
+              quote: "\"괜찮아, 너도 잘하고 있어. 억지로 안 해도 괜찮단다 :)",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const Counselor1Page()),
+                );
+              },
             ),
             buildProfileCard(
               imagePath: 'assets/images/counselor_2.png',
               name: '조용한 성실맘',
-              description: '과하지 않게, 매일매일 반복되는 루틴을 함께 지켜가요.',
+              description: '과하지 않게, \n매일매일 반복되는 루틴을 함께 지켜가요.',
               hashtags: ['계획 중심', '공감보다는 팁 위주'],
-              quote: '하루에 세 가지만 해도 충분해요. 규칙이 아이를 편하게 해줘요.',
+              quote: "\"하루에 세 가지만 해도 충분해요. 규칙이 아이를 편하게 해줘요.",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const Counselor2Page()),
+                );
+              },
             ),
             buildProfileCard(
               imagePath: 'assets/images/counselor_3.png',
               name: '차분한 상담선생님',
-              description: '정답은 몰라도, 흐름은 알 수 있어요. 루틴과 구조를 함께 만들어가는 육아 조력자예요.',
+              description: '정답은 몰라도, 흐름은 알 수 있어요. \n루틴과 구조를 함께 만들어가는 육아 조력자예요.',
               hashtags: ['육아 원리 제시', '부모와 아이를 함께 보는 시야'],
-              quote: '아이 반응은 예민한 흐름일 수 있어요. 안정 루틴을 잡아볼까요?',
+              quote: "\"아이 반응은 예민한 흐름일 수 있어요. 안정 루틴을 잡아볼까요?",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const Counselor3Page()),
+                );
+              },
             ),
             const SizedBox(height: 16),
           ],
@@ -188,3 +212,4 @@ class CounselorSelectionPage extends StatelessWidget {
     );
   }
 }
+
