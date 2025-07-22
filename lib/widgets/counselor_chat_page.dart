@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:growtogether/services/gpt_service.dart';
+import '../theme/palette.dart';
 
 class CounselorChatPage extends StatefulWidget {
-  const CounselorChatPage({super.key});
+  final String counselorName;
+  final String imagePath;
+  final Color themeColor;
+
+  const CounselorChatPage({
+    super.key,
+    required this.counselorName,
+    required this.imagePath,
+    required this.themeColor,
+  });
 
   @override
   State<CounselorChatPage> createState() => _CounselorChatPageState();
 }
 
 class _CounselorChatPageState extends State<CounselorChatPage> {
-  final Color themeColor = const Color(0xFFEFDAD5);
   final List<Map<String, String>> _chatHistory = [];
   final TextEditingController _controller = TextEditingController();
 
@@ -38,7 +47,7 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
         padding: const EdgeInsets.all(12.0),
         constraints: const BoxConstraints(maxWidth: 280),
         decoration: BoxDecoration(
-          color: isUser ? Colors.orange[100] : themeColor,
+          color: isUser ? Palette.softRed : widget.themeColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(message, style: const TextStyle(fontSize: 15)),
@@ -53,33 +62,35 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  const Icon(Icons.arrow_back_ios, size: 20),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.arrow_back_ios, size: 20),
+                  ),
                   const SizedBox(width: 8),
-                  const CircleAvatar(
-                    backgroundImage: AssetImage('assets/images/counselor_3.png'),
+                  CircleAvatar(
+                    backgroundImage: AssetImage(widget.imagePath),
                     radius: 16,
                   ),
                   const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '차분한 상담선생님',
-                        style: TextStyle(
+                      Text(
+                        widget.counselorName,
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Color(0xFFE06C4E),
+                          color: Palette.mainRed,
                         ),
                       ),
                       const Text(
                         '• Online',
                         style: TextStyle(
-                          color: Colors.green,
+                          color: Color(0xFF4A705E),
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -87,18 +98,16 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
                     ],
                   ),
                   const Spacer(),
-                  Icon(Icons.settings, color: Colors.grey[700]),
+                  const Icon(Icons.settings, color: Palette.greyText),
                 ],
               ),
             ),
             const SizedBox(height: 12),
             const Text(
               '이 시기에는 이런 질문이 많아요 😊',
-              style: TextStyle(fontSize: 15, color: Colors.black87),
+              style: TextStyle(fontSize: 15, color: Palette.black),
             ),
             const SizedBox(height: 12),
-
-            // 채팅 영역
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -110,15 +119,13 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
                 },
               ),
             ),
-
-            // 입력창
             Container(
               margin: const EdgeInsets.all(16.0),
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(30.0),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 4,
@@ -137,7 +144,7 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send, color: Colors.deepOrange),
+                    icon: const Icon(Icons.send, color: Palette.mainRed),
                     onPressed: _sendMessage,
                   ),
                 ],
@@ -149,3 +156,4 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
     );
   }
 }
+
