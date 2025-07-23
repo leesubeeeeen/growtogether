@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/counselor_chat_page.dart';
+import '../widgets/counselor_chat_page.dart';
 
 class Counselor1Page extends StatelessWidget {
   const Counselor1Page({super.key});
@@ -41,14 +42,14 @@ class Counselor1Page extends StatelessWidget {
 AI (친정엄마):
 아이고야~ 그런 마음 들 땐 정말 아무것도 하기 싫지... 너무 애썼다 우리 딸.
 오늘은 그냥 밥 먹고 푹 쉬자, 알겠지?
-여기선 행동 제안 없음 → 공감 중심
+ 여기선 행동 제안 없음 → 공감 중심
 ''';
 
     return CounselorChatPage(
-      counselorName: '따뜻한 친정엄마',
-      imagePath: 'assets/images/counselor_1.png',
-      themeColor: Color(0xFFFFE3E3),
-      systemPrompt: prompt,
+    counselorName: '조용한 성실맘',
+    imagePath: 'assets/images/counselor_2.png',
+    themeColor: Color(0xFFE6ECF0),
+    systemPrompt: prompt,
     );
   }
 }
