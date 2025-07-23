@@ -6,13 +6,14 @@ import 'providers/partner_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb용 import
 
-import 'package:intl/date_symbol_data_local.dart';
+//import 'package:intl/date_symbol_data_local.dart';
 import 'providers/emotion_provider.dart';
 import 'providers/todo_provider.dart';
 import 'screens/home_page.dart';
 import 'screens/todo_page.dart';
 import 'screens/todo_ai_page.dart';
 import 'screens/counselor_selection_page.dart';
+import 'screens/calendar_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/todo': (context) => const TodoPage(),
         '/todo-ai': (context) => const TodoAiPage(),
         '/chat': (context) => const CounselorSelectionPage(),
+        '/calendar': (context) => const CalendarScreen(),
       },
     );
   }
