@@ -45,8 +45,8 @@ AI (친정엄마):
 ''';
 
     return CounselorChatPage(
-    counselorName: '조용한 성실맘',
-    imagePath: 'assets/images/counselor_2.png',
+    counselorName: '따뜻한 친정엄마',
+    imagePath: 'assets/images/counselor_1.png',
     themeColor: Color(0xFFE6ECF0),
     systemPrompt: prompt,
     );
