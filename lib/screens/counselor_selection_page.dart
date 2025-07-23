@@ -55,10 +55,10 @@ class CounselorSelectionPage extends StatelessWidget {
                     const SizedBox(height: 4.0),
                     Text(description,
                         style: TextStyle(
-                          fontFamily: AppFonts.primaryFont,
+                          fontFamily: AppFonts.pretendard,
                           fontSize: 13,
                           fontWeight: FontWeight.w300,
-                          color: Palette.greyText,
+                          color: Palette.black,
                         )),
                   ],
                 ),
@@ -72,7 +72,7 @@ class CounselorSelectionPage extends StatelessWidget {
                 .map((tag) => Text(
               "#$tag",
               style: TextStyle(
-                fontFamily: AppFonts.primaryFont,
+                fontFamily: AppFonts.pretendard,
                 color: Palette.mainRed,
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -88,9 +88,9 @@ class CounselorSelectionPage extends StatelessWidget {
             style: TextStyle(
               fontFamily: AppFonts.primaryFont,
               color: Colors.black87,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              height: 1.5,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              height: 1,
             ),
           ),
           const SizedBox(height: 20.0),
@@ -141,7 +141,7 @@ class CounselorSelectionPage extends StatelessWidget {
           '누구랑 같이 키워볼까요?',
           style: TextStyle(
             fontFamily: AppFonts.primaryFont,
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: FontWeight.w400,
             color: Palette.black,
           ),
@@ -155,13 +155,13 @@ class CounselorSelectionPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Text(
-                'AI는 언제든 바뀔 수 있어요.\n먼저 마음에 드는 친구부터 시작해볼까요?',
+                'AI는 언제든 바꿀 수 있어요.\n먼저 마음에 드는 친구부터 시작해볼까요?',
                 style: TextStyle(
-                  fontFamily: AppFonts.primaryFont,
+                  fontFamily: AppFonts.pretendard,
                   fontSize: 14,
                   fontWeight: FontWeight.w300,
-                  color: Palette.greyText,
-                  height: 1.5,
+                  color: Palette.black,
+                  height: 1,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -183,7 +183,7 @@ class CounselorSelectionPage extends StatelessWidget {
               imagePath: 'assets/images/counselor_2.png',
               name: '조용한 성실맘',
               description: '과하지 않게, \n매일매일 반복되는 루틴을 함께 지켜가요.',
-              hashtags: ['계획 중심', '공감보다는 팁 위주'],
+              hashtags: ['계획 중심', '공감보다는 팁   위주'],
               quote: "\"하루에 세 가지만 해도 충분해요. 규칙이 아이를 편하게 해줘요.",
               onPressed: () {
                 Navigator.push(
