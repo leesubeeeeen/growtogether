@@ -1,12 +1,14 @@
-///OpenAI GPT 호출 함수
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class GptService {
-  Future<String> getAnswer(String prompt) async {
-    // 여기에 실제 GPT API 호출 코드 작성
-    final apiKey = dotenv.env['OPENAI_API_KEY'];
+  Future<String> getAnswer(String userMessage, String systemPrompt) async {
+    final apiKey = kIsWeb
+        ? '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'  // 나중엔 반드시 제거 권장
+        : dotenv.env['OPENAI_API_KEY'];
+
     final url = Uri.parse('https://api.openai.com/v1/chat/completions');
 
     final response = await http.post(
@@ -18,15 +20,21 @@ class GptService {
       body: jsonEncode({
         "model": "gpt-3.5-turbo",
         "messages": [
-          {"role": "user", "content": prompt}
+          { "role": "system", "content": systemPrompt },
+          { "role": "user", "content": userMessage }
         ],
       }),
     );
 
     if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
+      final decoded = utf8.decode(response.bodyBytes);
+      final json = jsonDecode(decoded);
+
       return json['choices'][0]['message']['content'];
     } else {
+      print("GPT 호출 실패 ❌");
+      print("Status code: ${response.statusCode}");
+      print("Body: ${response.body}");
       return '문제가 발생했어요 😥';
     }
   }

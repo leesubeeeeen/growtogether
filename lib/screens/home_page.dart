@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
           const Icon(Icons.mail_outline, size: 28),
           const SizedBox(height: 12),
           Image.asset(
-            'assets/images/plant.png',
+            'assets/images/seedling_placeholder.png',
             height: 100,
           ),
         ],
