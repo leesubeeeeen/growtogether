@@ -10,8 +10,8 @@ BottomNavigationBar buildBottomNavBar(BuildContext context, int currentIndex) {
     onTap: (index) {
       switch (index) {
         case 0:
-          if (ModalRoute.of(context)?.settings.name != '/') {
-            Navigator.pushNamed(context, '/');
+          if (ModalRoute.of(context)?.settings.name != '/calendar') {
+            Navigator.pushNamed(context, '/calendar');
           }
           break;
         case 1:
@@ -20,11 +20,16 @@ BottomNavigationBar buildBottomNavBar(BuildContext context, int currentIndex) {
           }
           break;
         case 2:
-          if (ModalRoute.of(context)?.settings.name != '/todo-ai') {
-            Navigator.pushNamed(context, '/todo-ai');
+          if (ModalRoute.of(context)?.settings.name != '/home') {
+            Navigator.pushNamed(context, '/home');
           }
           break;
         case 3:
+          if (ModalRoute.of(context)?.settings.name != '/todo-ai') {
+          Navigator.pushNamed(context, '/todo-ai');
+          }
+          break;
+        case 4:
           if (ModalRoute.of(context)?.settings.name != '/chat') {
             Navigator.pushNamed(context, '/chat');
           }
@@ -32,8 +37,9 @@ BottomNavigationBar buildBottomNavBar(BuildContext context, int currentIndex) {
       }
     },
     items: const [
-      BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+      BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''), // 추가된 아이템
       BottomNavigationBarItem(icon: Icon(Icons.check_box), label: ''),
+      BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
       BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: ''),
       BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
     ],

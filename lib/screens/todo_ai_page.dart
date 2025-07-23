@@ -259,7 +259,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
           ),
         ),
       ),
-      bottomNavigationBar: buildBottomNavBar(context, 2),
+      bottomNavigationBar: buildBottomNavBar(context, 3),
     );
   }
 }

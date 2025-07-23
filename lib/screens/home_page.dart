@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: buildBottomNavBar(context, 0),
+      bottomNavigationBar: buildBottomNavBar(context, 2),
     );
   }
 
