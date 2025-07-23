@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:growtogether/services/gpt_service.dart';
-import '../theme/palette.dart';
+import 'package:growtogether/theme/palette.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
   final String imagePath;
   final Color themeColor;
+  final String systemPrompt;
 
   const CounselorChatPage({
     super.key,
     required this.counselorName,
     required this.imagePath,
     required this.themeColor,
+    required this.systemPrompt,
   });
 
   @override
@@ -22,7 +24,7 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
   final List<Map<String, String>> _chatHistory = [];
   final TextEditingController _controller = TextEditingController();
 
-  void _sendMessage() async {
+  Future<void> _sendMessage() async {
     final question = _controller.text.trim();
     if (question.isEmpty) return;
 
@@ -31,7 +33,8 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
       _controller.clear();
     });
 
-    String result = await GptService().getAnswer(question);
+    String result = await GptService().getAnswer(question, widget.systemPrompt);
+
     setState(() {
       _chatHistory.add({'role': 'ai', 'message': result});
     });
