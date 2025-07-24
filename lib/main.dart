@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+//import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:flutter/foundation.dart'; // kIsWeb용 import
+//import 'package:flutter/foundation.dart'; // kIsWeb용 import
 
 //import 'package:intl/date_symbol_data_local.dart';
 import 'providers/emotion_provider.dart';
@@ -20,9 +20,9 @@ void main() async {
   await initializeDateFormatting('ko_KR', null);
 
   // ✅ 웹이 아닐 때만 .env 파일 로드
-  if (!kIsWeb) {
+ /* if (!kIsWeb) {
     await dotenv.load(fileName: ".env");
-  }
+  }*/
 
   runApp(
     MultiProvider(
