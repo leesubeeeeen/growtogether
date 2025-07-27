@@ -33,12 +33,29 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
       _controller.clear();
     });
 
-    String result = await GptService().getAnswer(question, widget.systemPrompt);
+    final messages = _buildMessagesForGPT(widget.systemPrompt);
+    final result = await GptService().getAnswerFromMessages(messages);
 
     setState(() {
-      _chatHistory.add({'role': 'ai', 'message': result});
+      _chatHistory.add({'role': 'assistant', 'message': result});
     });
   }
+
+  List<Map<String, String>> _buildMessagesForGPT(String systemPrompt) {
+    final messages = <Map<String, String>>[
+      { "role": "system", "content": systemPrompt },
+    ];
+
+    for (final chat in _chatHistory) {
+      messages.add({
+        "role": chat["role"]!,
+        "content": chat["message"]!,
+      });
+    }
+
+    return messages;
+  }
+
 
   Widget _buildChatCard(String role, String message) {
     final isUser = role == 'user';
