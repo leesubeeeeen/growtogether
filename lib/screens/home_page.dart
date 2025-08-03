@@ -85,13 +85,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
   Widget _buildPlantImage() {
     return Center(
       child: Column(
         children: [
-          const Icon(Icons.mail_outline, size: 28),
+          GestureDetector(
+            onTap: _showPartnerPopup,
+            child: const Icon(Icons.mail_outline, size: 28),
+          ),
           const SizedBox(height: 12),
           Image.asset(
             'assets/images/seedling_placeholder.png',
@@ -101,4 +102,57 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  bool isPartnerLinked = true; // 실제 연동 여부에 따라 변경 (현재는 더미)
+  void _showPartnerPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        if (isPartnerLinked) {
+          // 더미 데이터
+          final dummyMood = "피곤하지만 괜찮음 😊";
+          final dummyFatigue = 4;
+
+          return AlertDialog(
+            title: const Text('배우자의 감정'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('오늘의 감정: $dummyMood'),
+                const SizedBox(height: 8),
+                Text('피로도: $dummyFatigue / 10'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('닫기'),
+              ),
+            ],
+          );
+        } else {
+          return AlertDialog(
+            title: const Text('연동되지 않음'),
+            content: const Text('아직 배우자와 연동되지 않았습니다.\n연동 설정으로 이동하시겠습니까?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/link-partner'); // 추후 설정 페이지 라우팅
+                },
+                child: const Text('연동하기'),
+              ),
+            ],
+          );
+        }
+      },
+    );
+  }
+
+
 }
