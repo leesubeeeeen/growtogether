@@ -14,6 +14,7 @@ import 'screens/todo_page.dart';
 import 'screens/todo_ai_page.dart';
 import 'screens/counselor_selection_page.dart';
 import 'screens/calendar_screen.dart';
+import 'screens/connect_partner_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         '/todo-ai': (context) => const TodoAiPage(),
         '/chat': (context) => const CounselorSelectionPage(),
         '/calendar': (context) => const CalendarScreen(),
+        '/link-partner': (context) => const ConnectPartnerScreen(), // ✅ 이 줄만 추가!
       },
     );
   }
