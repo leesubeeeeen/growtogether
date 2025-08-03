@@ -155,15 +155,15 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     children: [
                       Row(
                         children: const [
-                          Icon(Icons.lightbulb_outline, color: Palette.greyText),
+                          Icon(Icons.lightbulb_outline, color: Palette.calmYellow),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '대디의 일정이 최근 많이 비어있어요.\n화요일 오후는 어떠세요?',
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w100,
-                                color: Palette.greyText,
+                                fontWeight: FontWeight.w300,
+                                color: Palette.black,
                               ),
                             ),
                           ),
@@ -174,7 +174,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 12),
                       Row(
                         children: const [
-                          Icon(Icons.calendar_today, size: 16),
+                          Icon(Icons.calendar_today, size: 16, color: Palette.mainRed,),
                           SizedBox(width: 6),
                           Text('5월 28일 (화) 오후 7시', style: TextStyle(fontSize: 14)),
                         ],
@@ -182,7 +182,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: const [
-                          Icon(Icons.person, size: 16),
+                          Icon(Icons.person, size: 16, color: Palette.mainRed,),
                           SizedBox(width: 6),
                           Text('대디', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w100)),
                         ],
@@ -190,7 +190,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: const [
-                          Icon(Icons.sync, size: 16),
+                          Icon(Icons.sync, size: 16, color: Palette.mainRed,),
                           SizedBox(width: 6),
                           Text('반복 없음', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w100)),
                         ],
@@ -225,7 +225,14 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                     minimumSize: const Size.fromHeight(48),
                   ),
-                  child: const Text('이렇게 할래요'),
+                  child: const Text(
+                    '이렇게 할래요',
+                    style: TextStyle(
+                      fontFamily: AppFonts.primaryFont,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+
                 ),
 
                 const SizedBox(height: 12),
@@ -239,7 +246,13 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                     minimumSize: const Size.fromHeight(48),
                   ),
-                  child: const Text('조금 수정할게요'),
+                  child: const Text(
+                      '조금 수정할게요',
+                    style: TextStyle(
+                      fontFamily: AppFonts.primaryFont,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
@@ -252,7 +265,12 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                     minimumSize: const Size.fromHeight(48),
                   ),
-                  child: const Text('제가 직접할래요'),
+                  child: const Text(
+                      '제가 직접할래요',
+                    style: TextStyle(
+                      fontFamily: AppFonts.primaryFont,
+                      fontWeight: FontWeight.w400,
+                    ),),
                 ),
               ],
             ],
