@@ -4,6 +4,7 @@ import 'package:growtogether/theme/palette.dart';
 import 'package:growtogether/widgets/todo_recommend_popup.dart';
 import 'package:provider/provider.dart';
 import 'package:growtogether/providers/todo_provider.dart';
+import 'package:growtogether/utils/gpt_utils.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
@@ -46,10 +47,10 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
       _chatHistory.add({'role': 'assistant', 'message': result});
     });
 
-    // 👇 일정 추천 문구 감지 예시 (임시 조건)
-    if (result.contains("간식 챙기기")) {
+    final actions = extractRecommendedActions(result);
+    if (actions.isNotEmpty) {
       setState(() {
-        _todoSuggestion = "간식 챙기기"; // 실제 파싱 필요
+        _todoSuggestion = actions.first; // 예시: 첫 번째 행동만 보여줌
         _showPopup = true;
       });
     }
