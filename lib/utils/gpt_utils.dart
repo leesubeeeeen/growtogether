@@ -1,5 +1,5 @@
 List<String> extractRecommendedActions(String response) {
-  final regex = RegExp(r'추천 행동:\s*\[(.*?)\]');
+  final regex = RegExp(r'\[(.*?)\]');
   final match = regex.firstMatch(response);
 
   if (match != null) {
