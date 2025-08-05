@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:growtogether/providers/calendar_provider.dart';
 //import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/user_provider.dart';
@@ -32,6 +33,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PartnerProvider()),
         ChangeNotifierProvider(create: (_) => EmotionProvider()),
         ChangeNotifierProvider(create: (_) => TodoProvider()),
+        ChangeNotifierProvider(create: (_) => CalendarProvider()),
       ],
       child: const MyApp(),
     ),
