@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:growtogether/services/gpt_service.dart';
 import 'package:growtogether/theme/palette.dart';
 import 'package:growtogether/widgets/todo_recommend_popup.dart';
+import 'package:provider/provider.dart';
+import '../providers/todo_provider.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
@@ -54,6 +56,10 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
   }
 
   void _addTodoAndCalendar(String todo) {
+    context.read<TodoProvider>().addTodo(todo);
+
+    // 캘린더도 연동할 거면 여기에 추가
+    // context.read<CalendarProvider>().addSchedule(todo);
     // 👉 여기에 투두 + 캘린더 저장 로직 연결할 것
     print('Todo + Calendar 저장: $todo');
   }
