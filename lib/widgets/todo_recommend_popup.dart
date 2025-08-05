@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../theme/palette.dart';
+
 class TodoRecommendPopup extends StatefulWidget {
   final String recommendationText;
   final VoidCallback onAdd;
@@ -51,31 +53,58 @@ class _TodoRecommendPopupState extends State<TodoRecommendPopup> {
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   widget.recommendationText,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Palette.black,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    // 추가할게요 버튼
                     ElevatedButton(
                       onPressed: widget.onAdd,
-                      child: const Text("추가할게요"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Palette.mainRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: const Text("추가"),
                     ),
+
+                    // 수정할게요 버튼
                     OutlinedButton(
                       onPressed: widget.onEdit,
-                      child: const Text("수정할게요"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Palette.mainRed,
+                        side: const BorderSide(color: Palette.mainRed),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: const Text("수정"),
                     ),
-                    TextButton(
+
+                    // 필요없어요 버튼
+                    OutlinedButton(
                       onPressed: widget.onDismiss,
-                      child: const Text("필요없어요"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Palette.greyText,
+                        side: const BorderSide(color: Palette.greyBorder),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      child: const Text("필요없음"),
                     ),
                   ],
                 )
               ],
-            ),
+            )
+
           ),
         ),
       ),
