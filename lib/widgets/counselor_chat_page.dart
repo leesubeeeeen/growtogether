@@ -5,6 +5,7 @@ import 'package:growtogether/widgets/todo_recommend_popup.dart';
 import 'package:provider/provider.dart';
 import 'package:growtogether/providers/todo_provider.dart';
 import 'package:growtogether/utils/gpt_utils.dart';
+import '../providers/calendar_provider.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
@@ -57,13 +58,15 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
   }
 
   void _addTodoAndCalendar(String todo) {
+    // Todo 추가
     context.read<TodoProvider>().addTodo(todo);
 
-    // 캘린더도 연동할 거면 여기에 추가
-    // context.read<CalendarProvider>().addSchedule(todo);
-    // 👉 여기에 투두 + 캘린더 저장 로직 연결할 것
-    print('Todo + Calendar 저장: $todo');
+    // Calendar에 오늘 날짜 일정 추가
+    final today = DateTime.now();
+    final event = CalendarEvent(title: todo, date: today);
+    context.read<CalendarProvider>().addEvent(event);
   }
+
 
   List<Map<String, String>> _buildMessagesForGPT(String systemPrompt) {
     final messages = <Map<String, String>>[
