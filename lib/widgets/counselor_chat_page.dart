@@ -5,7 +5,7 @@ import 'package:growtogether/widgets/todo_recommend_popup.dart';
 import 'package:provider/provider.dart';
 import 'package:growtogether/providers/todo_provider.dart';
 import 'package:growtogether/utils/gpt_utils.dart';
-import '../providers/calendar_provider.dart';
+import 'package:growtogether/providers/calendar_provider.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
