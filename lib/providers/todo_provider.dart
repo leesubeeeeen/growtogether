@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 class TodoProvider with ChangeNotifier {
-  final List<String> _todos = [];
+  // ✅ title, time을 포함한 Map 리스트로 변경
+  final List<Map<String, String>> _todos = [];
 
-  List<String> get todos => List.unmodifiable(_todos);
+  List<Map<String, String>> get todos => List.unmodifiable(_todos);
 
-  void addTodo(String todo) {
+  // ✅ Map 구조로 todo 추가
+  void addTodo(Map<String, String> todo) {
     _todos.add(todo);
     notifyListeners();
   }

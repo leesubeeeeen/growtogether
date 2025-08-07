@@ -206,7 +206,11 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   onPressed: () {
                     final todoText = _controller.text.trim();
                     if (todoText.isNotEmpty) {
-                      Provider.of<TodoProvider>(context, listen: false).addTodo(todoText);
+                      Provider.of<TodoProvider>(context, listen: false).addTodo({
+                        'title': todoText,
+                        'time': '시간 미정', // 또는 비워둘 수도 있음
+                      });
+
                       _controller.clear();
                       setState(() {
                         _showSuggestion = false;
@@ -232,8 +236,8 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-
                 ),
+
 
                 const SizedBox(height: 12),
                 ElevatedButton(
