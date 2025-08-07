@@ -165,21 +165,24 @@ class TodoPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: item,
         )),
-        const SizedBox(height: 12),
+        const SizedBox(height: 24), // 간격 좀 더 주기
         if (todos.isNotEmpty)
-          const Text(
-            '내가 추가한 할 일',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Palette.black,
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              '내가 추가한 할 일',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Palette.black,
+              ),
             ),
           ),
         ...todos.map((todo) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: ScheduleItem(
-            time: '시간 미정',
-            title: todo,
+            time: todo['time'] ?? '시간 미정',
+            title: todo['title'] ?? '제목 없음',
             content: '사용자가 직접 추가한 일정',
             location: '장소 없음',
             parent: '나',
@@ -189,5 +192,6 @@ class TodoPage extends StatelessWidget {
         )),
       ],
     );
+
   }
 }

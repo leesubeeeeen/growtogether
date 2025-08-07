@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:growtogether/providers/todo_provider.dart';
 import 'package:growtogether/utils/gpt_utils.dart';
 import 'package:growtogether/providers/calendar_provider.dart';
+import 'package:growtogether/screens/add_schedule_bottom_screen.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
@@ -57,15 +58,16 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
     }
   }
 
-  void _addTodoAndCalendar(String todo) {
-    // Todo 추가
+  void _addTodoAndCalendar(Map<String, String> todo) {
+    // TodoProvider에 Map 형태로 추가
     context.read<TodoProvider>().addTodo(todo);
 
-    // Calendar에 오늘 날짜 일정 추가
+    // Calendar에는 title만 넘겨서 추가
     final today = DateTime.now();
-    final event = CalendarEvent(title: todo, date: today);
+    final event = CalendarEvent(title: todo['title'] ?? '제목 없음', date: today);
     context.read<CalendarProvider>().addEvent(event);
   }
+
 
 
   List<Map<String, String>> _buildMessagesForGPT(String systemPrompt) {
@@ -212,13 +214,37 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
               TodoRecommendPopup(
                 recommendationText: _todoSuggestion,
                 onAdd: () {
-                  _addTodoAndCalendar(_todoSuggestion);
+                  _addTodoAndCalendar({
+                    'title': _todoSuggestion,
+                    'time': '시간 미정', // 또는 추천 시간 넣을 수 있으면 넣기
+                  });
+
                   setState(() => _showPopup = false);
                 },
                 onEdit: () {
-                  // TODO: 수정 화면으로 이동 (EditTodoPage 구현 필요)
-                  print('수정 페이지로 이동');
-                  setState(() => _showPopup = false);
+                  setState(() => _showPopup = false); // 팝업 먼저 닫고
+
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (context) => AddScheduleBottomScreen(
+                      onScheduleAdded: (updatedSchedule) {
+                        // ✅ 수정된 일정 저장 처리
+                        _addTodoAndCalendar({
+                          'title': updatedSchedule['title'] ?? _todoSuggestion,
+                          'time': updatedSchedule['time'] ?? '시간 미정',
+                        });
+
+                      },
+                      initialTitle: _todoSuggestion,
+                      initialStartTime: TimeOfDay(hour: 9, minute: 0),
+                      initialEndTime: TimeOfDay(hour: 9, minute: 30),
+                      initialDays: {"월"}, // 기본값 예시, 필요시 수정
+                    ),
+                  );
                 },
                 onDismiss: () => setState(() => _showPopup = false),
               ),
