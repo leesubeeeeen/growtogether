@@ -76,7 +76,7 @@ class _MoodBoxState extends State<MoodBox> {
               activeTrackColor: Palette.mainRed,
               inactiveTrackColor: Palette.greyBorder,
               thumbColor: Palette.mainRed,
-              overlayColor: Palette.mainRed.withOpacity(0.2),
+              overlayColor: Palette.mainRed,
             ),
             child: Slider(
               value: fatigueValue,
