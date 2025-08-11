@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/palette.dart';
+import '../theme/fonts.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 
@@ -7,42 +9,45 @@ class StartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color mainColor = const Color(0xFFD26A5C);
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Palette.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: EdgeInsets.symmetric(horizontal: w * 0.06),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // 로고 이미지
               Image.asset(
                 'assets/images/logo.png',
-                width: 120,
-                height: 120,
+                width: w * 0.3,
+                height: w * 0.3,
+                fit: BoxFit.contain,
               ),
 
-              const SizedBox(height: 40),
+              SizedBox(height: h * 0.05),
 
               // 타이틀
               Text(
                 '같이 키우기\n시작해볼까요?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: w * 0.065,
                   fontWeight: FontWeight.bold,
-                  color: mainColor,
+                  color: Palette.mainRed,
+                  fontFamily: AppFonts.pretendard,
                 ),
               ),
 
-              const SizedBox(height: 60),
+              SizedBox(height: h * 0.08),
 
               // 로그인 버튼
               SizedBox(
                 width: double.infinity,
-                height: 55,
+                height: h * 0.065,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -51,7 +56,7 @@ class StartScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: mainColor,
+                    backgroundColor: Palette.mainRed,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -61,17 +66,19 @@ class StartScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      fontFamily: AppFonts.pretendard,
+                      color: Palette.background,
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              SizedBox(height: h * 0.025),
 
               // 가입하기 버튼
               SizedBox(
                 width: double.infinity,
-                height: 55,
+                height: h * 0.065,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -81,7 +88,7 @@ class StartScreen extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFCEDE7),
-                    foregroundColor: mainColor,
+                    foregroundColor: Palette.mainRed,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -92,6 +99,7 @@ class StartScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      fontFamily: AppFonts.pretendard,
                     ),
                   ),
                 ),
@@ -103,3 +111,4 @@ class StartScreen extends StatelessWidget {
     );
   }
 }
+
