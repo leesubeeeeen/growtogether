@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/palette.dart';
+import '../theme/fonts.dart';
 import '../providers/emotion_provider.dart';
 import 'package:provider/provider.dart';
-
 
 class MoodBox extends StatefulWidget {
   const MoodBox({super.key});
@@ -30,7 +30,11 @@ class _MoodBoxState extends State<MoodBox> {
         children: [
           const Text(
             '오늘의 상태를 알려주세요',
-            style: TextStyle(fontWeight: FontWeight.w300),
+            style: TextStyle(
+              fontWeight: FontWeight.w300,
+              fontFamily: AppFonts.primaryFont,
+              fontSize: 18,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -49,8 +53,7 @@ class _MoodBoxState extends State<MoodBox> {
                       height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                        isSelected ? Palette.mainRed : Colors.transparent,
+                        color: isSelected ? Palette.mainRed : Colors.transparent,
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -67,13 +70,20 @@ class _MoodBoxState extends State<MoodBox> {
             }).toList(),
           ),
           const SizedBox(height: 20),
-          Slider(
-            value: fatigueValue,
-            onChanged: (value) {
-              provider.setFatigue(value);
-            },
-            activeColor: Palette.calmYellow,
-            inactiveColor: Palette.greyBorder,
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 6, // 슬라이더 두께
+              activeTrackColor: Palette.mainRed,
+              inactiveTrackColor: Palette.greyBorder,
+              thumbColor: Palette.mainRed,
+              overlayColor: Palette.mainRed.withOpacity(0.2),
+            ),
+            child: Slider(
+              value: fatigueValue,
+              onChanged: (value) {
+                provider.setFatigue(value);
+              },
+            ),
           ),
           const SizedBox(height: 4),
           Row(
@@ -81,19 +91,42 @@ class _MoodBoxState extends State<MoodBox> {
             children: [
               const Icon(Icons.bolt, color: Palette.calmYellow, size: 20),
               const SizedBox(width: 6),
-              Text('${(fatigueValue * 100).toInt()}%',
-                  style: const TextStyle(fontSize: 16)),
+              Text(
+                '${(fatigueValue * 100).toInt()}%',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontFamily: AppFonts.primaryFont,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () {
-              provider.saveTodayEmotion();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
-              );
-            },
-            child: const Text('저장하기'),
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: ElevatedButton(
+              onPressed: () {
+                provider.saveTodayEmotion();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Palette.mainRed,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                '저장하기',
+                style: TextStyle(
+                  fontWeight: FontWeight.w300,
+                  fontFamily: AppFonts.primaryFont,
+                  color: Palette.background,
+                  fontSize: 16,
+                ),
+              ),
+            ),
           ),
         ],
       ),
