@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import 'login_screen.dart';
+import '../services/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -11,11 +12,32 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final AuthService _authService = AuthService();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool _loading = false;
 
-  bool _obscurePassword = true;
+  void _signUp() async {
+    setState(() => _loading = true);
+    String? error = await _authService.signUp(
+      nameController.text.trim(),
+      emailController.text.trim(),
+      passwordController.text.trim(),
+    );
+    setState(() => _loading = false);
+
+    if (error == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('회원가입 실패: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,25 +51,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              left: w * 0.06,
-              right: w * 0.06,
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: w * 0.06),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-
                 SizedBox(height: h * 0.05),
-
                 Text(
-                  '계정을 만들고\n같이 키워봐요!',
+                  '회원가입',
                   style: TextStyle(
                     fontSize: w * 0.065,
                     fontWeight: FontWeight.bold,
@@ -55,135 +65,56 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fontFamily: AppFonts.pretendard,
                   ),
                 ),
-
                 SizedBox(height: h * 0.07),
 
-                // 이름 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: nameController,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: const InputDecoration(
-                      icon: Icon(Icons.person_outline, color: Colors.black),
-                      hintText: '이름을 입력해주세요',
-                      hintStyle: TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-
+                _buildTextField(nameController, '이름', Icons.person_outline),
                 SizedBox(height: h * 0.025),
-
-                // 이메일 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: emailController,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: const InputDecoration(
-                      icon: Icon(Icons.email_outlined, color: Colors.black),
-                      hintText: '이메일을 입력해주세요',
-                      hintStyle: TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-
+                _buildTextField(emailController, '이메일', Icons.email_outlined),
                 SizedBox(height: h * 0.025),
-
-                // 비밀번호 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: passwordController,
-                    obscureText: _obscurePassword,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: InputDecoration(
-                      icon: const Icon(Icons.lock_outline, color: Colors.black),
-                      hintText: '비밀번호를 입력해주세요',
-                      hintStyle: const TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-
+                _buildTextField(passwordController, '비밀번호', Icons.lock_outline, obscure: true),
                 SizedBox(height: h * 0.07),
 
-                // 계정 만들기 버튼
                 SizedBox(
                   width: double.infinity,
                   height: h * 0.065,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _loading ? null : _signUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Palette.mainRed,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      '계정 만들기',
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      '가입하기',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        fontFamily: AppFonts.pretendard,
                         color: Palette.background,
+                        fontFamily: AppFonts.pretendard,
                       ),
                     ),
                   ),
                 ),
-
                 SizedBox(height: h * 0.025),
 
-                // 이미 계정이 있나요? 로그인하기
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
                       '이미 계정이 있으신가요? ',
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Palette.greyText,
                         fontFamily: AppFonts.pretendard,
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
-                      },
+                      onTap: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      ),
                       child: const Text(
                         '로그인하기',
                         style: TextStyle(
@@ -198,6 +129,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {bool obscure = false}) {
+    final w = MediaQuery.of(context).size.width;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        style: const TextStyle(fontFamily: AppFonts.pretendard),
+        decoration: InputDecoration(
+          icon: Icon(icon, color: Palette.black),
+          hintText: hint,
+          hintStyle: const TextStyle(fontFamily: AppFonts.pretendard),
+          border: InputBorder.none,
         ),
       ),
     );

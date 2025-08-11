@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
@@ -14,23 +15,26 @@ import 'screens/todo_ai_page.dart';
 import 'screens/counselor_selection_page.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/connect_partner_screen.dart';
-import 'screens/connect_complete_screen.dart';   // ✅ 추가
-import 'screens/login_screen.dart';             // ✅ 추가
+import 'screens/connect_complete_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/start_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/settings_screen.dart';
+
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-    await initializeDateFormatting('ko_KR', null);
-  } catch (e, st) {
-    debugPrint('🚨 Firebase/Intl 초기화 실패: $e\n$st');
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await initializeDateFormatting('ko_KR', null);
   runApp(const AppRoot());
 }
 
 class AppRoot extends StatelessWidget {
   const AppRoot({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -47,26 +51,36 @@ class AppRoot extends StatelessWidget {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Grow Together',
-      // ✅ 시작 화면을 로그인으로
-      initialRoute: '/start',
       routes: {
-        '/start': (context) => const StartScreen(),
-        '/login': (context) => const LoginScreen(),                 // ✅ 추가
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/settings': (context) => const SettingsScreen(),
         '/link-partner': (context) => const ConnectPartnerScreen(),
-        '/connect-complete': (context) => const ConnectCompleteScreen(), // ✅ 추가
+        '/connect-complete': (context) => const ConnectCompleteScreen(),
         '/home': (context) => const HomePage(),
-
-        // 기존 라우트 유지
         '/todo': (context) => const TodoPage(),
         '/todo-ai': (context) => const TodoAiPage(),
         '/chat': (context) => const CounselorSelectionPage(),
         '/calendar': (context) => const CalendarScreen(),
       },
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasData) {
+            return const HomePage();
+          }
+          return const StartScreen();
+        },
+      ),
     );
   }
 }
