@@ -13,13 +13,20 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        // (선택) Flutter 저장소 필요시
+        // maven { url = uri("https://storage.googleapis.com/download.flutter.io") }
     }
 }
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.7.3" apply false
-    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+
+    // 🔽 호환성 좋은 안정 조합
+    id("com.android.application") version "8.5.2" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+
+    // 🔽 google-services는 settings에서 버전 지정해두면 app에서 버전 없이 사용 가능
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 include(":app")
