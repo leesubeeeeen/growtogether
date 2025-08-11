@@ -13,7 +13,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,9 +25,9 @@ class _HomePageState extends State<HomePage> {
             children: [
               _buildDdaySection(),
               const SizedBox(height: 16),
-              const CalendarBox(),
+              const CalendarBox(), // ✅ 실제 작동하는 캘린더
               const SizedBox(height: 20),
-              const MoodBox(),
+              const MoodBox(), // ✅ 저장 버튼·피로도 바 스타일 반영됨
               const SizedBox(height: 24),
               _buildPlantImage(),
               const SizedBox(height: 32),
@@ -40,9 +39,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// _buildDdaySection, _buildPlantImage는 그대로
-
-
   Widget _buildDdaySection() {
     return Align(
       alignment: Alignment.centerRight,
@@ -52,16 +48,16 @@ class _HomePageState extends State<HomePage> {
           RichText(
             text: TextSpan(
               style: TextStyle(
-                fontFamily: AppFonts.primaryFont, // const 제거
+                fontFamily: AppFonts.primaryFont, // ✅ BMJUA
                 fontSize: 16,
                 fontWeight: FontWeight.w300,
                 color: Palette.black,
               ),
-              children: [
-                const TextSpan(text: '엄마 아빠 함께한지 '),
+              children: const [
+                TextSpan(text: '엄마 아빠 함께한지 '),
                 TextSpan(
                   text: '+600일',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Palette.mainRed,
                   ),
                 ),
@@ -109,43 +105,45 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         if (isPartnerLinked) {
-          // 더미 데이터
           final dummyMood = "피곤하지만 괜찮음 😊";
           final dummyFatigue = 4;
 
           return AlertDialog(
-            title: const Text('배우자의 감정'),
+            title: const Text('배우자의 감정', style: TextStyle(fontFamily: AppFonts.primaryFont)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('오늘의 감정: $dummyMood'),
+                Text('오늘의 감정: $dummyMood', style: const TextStyle(fontFamily: AppFonts.primaryFont)),
                 const SizedBox(height: 8),
-                Text('피로도: $dummyFatigue / 10'),
+                Text('피로도: $dummyFatigue / 10', style: const TextStyle(fontFamily: AppFonts.primaryFont)),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('닫기'),
+                child: const Text('닫기', style: TextStyle(fontFamily: AppFonts.primaryFont)),
               ),
             ],
           );
         } else {
           return AlertDialog(
-            title: const Text('연동되지 않음'),
-            content: const Text('아직 배우자와 연동되지 않았습니다.\n연동 설정으로 이동하시겠습니까?'),
+            title: const Text('연동되지 않음', style: TextStyle(fontFamily: AppFonts.primaryFont)),
+            content: const Text(
+              '아직 배우자와 연동되지 않았습니다.\n연동 설정으로 이동하시겠습니까?',
+              style: TextStyle(fontFamily: AppFonts.primaryFont),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('취소'),
+                child: const Text('취소', style: TextStyle(fontFamily: AppFonts.primaryFont)),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  Navigator.pushNamed(context, '/link-partner'); // 추후 설정 페이지 라우팅
+                  Navigator.pushNamed(context, '/link-partner');
                 },
-                child: const Text('연동하기'),
+                child: const Text('연동하기', style: TextStyle(fontFamily: AppFonts.primaryFont)),
               ),
             ],
           );
@@ -153,6 +151,4 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
-
 }

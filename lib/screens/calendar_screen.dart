@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:growtogether/widgets/bottom_navi_bar.dart';
+import '../theme/palette.dart';
+import '../theme/fonts.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({Key? key}) : super(key: key);
@@ -21,20 +23,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final mainColor = Color(0xFFD26A5C);
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Palette.background,
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 16),
+            SizedBox(height: h * 0.02),
+
             // month title
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: mainColor),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded,
+                      color: Palette.mainRed, size: w * 0.06),
                   onPressed: () {
                     setState(() {
                       _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1);
@@ -46,18 +51,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Text(
                       '${_focusedDay.month}월',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: w * 0.07,
                         fontWeight: FontWeight.bold,
+                        fontFamily: AppFonts.pretendard,
+                        color: Colors.black,
                       ),
                     ),
                     Text(
                       '${_focusedDay.year}',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: w * 0.04,
+                        fontFamily: AppFonts.pretendard,
+                        color: Colors.black87,
+                      ),
                     ),
                   ],
                 ),
                 IconButton(
-                  icon: Icon(Icons.arrow_forward_ios_rounded, color: mainColor),
+                  icon: Icon(Icons.arrow_forward_ios_rounded,
+                      color: Palette.mainRed, size: w * 0.06),
                   onPressed: () {
                     setState(() {
                       _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
@@ -66,7 +78,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 8),
+
+            SizedBox(height: h * 0.01),
+
             TableCalendar(
               locale: 'ko_KR',
               firstDay: DateTime.utc(2020, 1, 1),
@@ -80,23 +94,42 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 });
               },
               headerVisible: false,
+              rowHeight: MediaQuery.of(context).size.height * 0.09, // ✅ 행 높이 넓힘
               calendarStyle: CalendarStyle(
+                defaultTextStyle: TextStyle(
+                  fontFamily: AppFonts.primaryFont, // ✅ BMJUA
+                  fontSize: MediaQuery.of(context).size.width * 0.035,
+                  color: Colors.black,
+                ),
+                weekendTextStyle: TextStyle(
+                  fontFamily: AppFonts.primaryFont, // ✅ BMJUA
+                  fontSize: MediaQuery.of(context).size.width * 0.035,
+                  color: Palette.mainRed,
+                ),
                 todayDecoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: mainColor),
+                  border: Border.all(color: Palette.mainRed),
                 ),
                 selectedDecoration: BoxDecoration(
-                  color: mainColor,
+                  color: Palette.mainRed,
                   shape: BoxShape.circle,
                 ),
               ),
               daysOfWeekStyle: DaysOfWeekStyle(
-                weekdayStyle: TextStyle(color: Colors.black87),
-                weekendStyle: TextStyle(color: mainColor),
+                weekdayStyle: TextStyle(
+                  fontFamily: AppFonts.primaryFont, // ✅ BMJUA
+                  color: Colors.black87,
+                  fontSize: MediaQuery.of(context).size.width * 0.033,
+                ),
+                weekendStyle: TextStyle(
+                  fontFamily: AppFonts.primaryFont, // ✅ BMJUA
+                  color: Palette.mainRed,
+                  fontSize: MediaQuery.of(context).size.width * 0.033,
+                ),
               ),
-              calendarBuilders: CalendarBuilders(),
-            ),
-            Expanded(child: Container()), // 이후 일정 리스트 들어갈 부분
+            )
+
+
           ],
         ),
       ),

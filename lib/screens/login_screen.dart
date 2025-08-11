@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart'; // 회원가입 화면으로 이동할 때 필요
+import '../theme/palette.dart';
+import '../theme/fonts.dart';
+import 'signup_screen.dart';
+import 'connect_complete_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,134 +17,158 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _obscurePassword = true;
 
-  final Color mainColor = const Color(0xFFD26A5C);
-
   @override
   Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Palette.background,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: w * 0.06,
+              right: w * 0.06,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: h * 0.05),
 
-              // 제목
-              Text(
-                '접속 완료!\n같이 키우기 시작!',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: mainColor,
-                ),
-              ),
-
-              const SizedBox(height: 50),
-
-              // 이메일 입력
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9F9F9),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    icon: Icon(Icons.email_outlined, color: Colors.black),
-                    hintText: '이메일을 입력해주세요',
-                    border: InputBorder.none,
+                Text(
+                  '접속 완료!\n같이 키우기 시작!',
+                  style: TextStyle(
+                    fontSize: w * 0.065,
+                    fontWeight: FontWeight.bold,
+                    color: Palette.mainRed,
+                    fontFamily: AppFonts.pretendard,
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 20),
+                SizedBox(height: h * 0.07),
 
-              // 비밀번호 입력
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9F9F9),
-                  borderRadius: BorderRadius.circular(16),
+                // 이메일 입력
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+                  child: TextField(
+                    controller: emailController,
+                    style: const TextStyle(fontFamily: AppFonts.pretendard),
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.email_outlined, color: Palette.black),
+                      hintText: '이메일을 입력해주세요',
+                      hintStyle: TextStyle(fontFamily: AppFonts.pretendard),
+                      border: InputBorder.none,
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  controller: passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    icon: const Icon(Icons.lock_outline, color: Colors.black),
-                    hintText: '비밀번호를 입력해주세요',
-                    border: InputBorder.none,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
+
+                SizedBox(height: h * 0.025),
+
+                // 비밀번호 입력
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+                  child: TextField(
+                    controller: passwordController,
+                    obscureText: _obscurePassword,
+                    style: const TextStyle(fontFamily: AppFonts.pretendard),
+                    decoration: InputDecoration(
+                      icon: const Icon(Icons.lock_outline, color: Palette.black),
+                      hintText: '비밀번호를 입력해주세요',
+                      hintStyle: const TextStyle(fontFamily: AppFonts.pretendard),
+                      border: InputBorder.none,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: Palette.greyText,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 50),
+                SizedBox(height: h * 0.07),
 
-              // 로그인 버튼
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: () {
-                    print('로그인 시도');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: mainColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    '로그인',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // 회원가입 링크
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    '계정이 없으신가요? ',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
+                // 로그인 버튼
+                SizedBox(
+                  width: double.infinity,
+                  height: h * 0.065,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const ConnectCompleteScreen(),
+                        ),
                       );
                     },
-                    child: Text(
-                      '회원가입하기',
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Palette.mainRed,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      '로그인',
                       style: TextStyle(
-                        color: mainColor,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Palette.background,
+                        fontFamily: AppFonts.pretendard,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+
+                SizedBox(height: h * 0.025),
+
+                // 회원가입 링크
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      '계정이 없으신가요? ',
+                      style: TextStyle(
+                        color: Palette.greyText,
+                        fontFamily: AppFonts.pretendard,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                        );
+                      },
+                      child: const Text(
+                        '회원가입하기',
+                        style: TextStyle(
+                          color: Palette.mainRed,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: AppFonts.pretendard,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

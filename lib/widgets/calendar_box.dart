@@ -1,77 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../theme/palette.dart';
+import '../theme/fonts.dart';
 
-class CalendarBox extends StatelessWidget {
+class CalendarBox extends StatefulWidget {
   const CalendarBox({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<String> days = ['월', '화', '수', '목', '금', '토', '일'];
-    final List<int> dates = [12, 13, 14, 15, 16, 17, 18];
-    final int selectedIndex = 3; // 예: 15일 선택됨
+  State<CalendarBox> createState() => _CalendarBoxState();
+}
 
+class _CalendarBoxState extends State<CalendarBox> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  CalendarFormat _calendarFormat = CalendarFormat.week; // ✅ 기본 주 단위
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Palette.lightRed,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        children: [
-          // ✅ 요일 텍스트 색상 지정
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: days.asMap().entries.map((entry) {
-              final int idx = entry.key;
-              final String day = entry.value;
-
-              final bool isWeekend = idx == 5 || idx == 6; // 토(5), 일(6)
-
-              return Expanded(
-                child: Center(
-                  child: Text(
-                    day,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w300,
-                      color: isWeekend ? Palette.mainRed : Palette.greyText,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+      child: TableCalendar(
+        locale: 'ko_KR',
+        firstDay: DateTime.utc(2020, 1, 1),
+        lastDay: DateTime.utc(2030, 12, 31),
+        focusedDay: _focusedDay,
+        calendarFormat: _calendarFormat,
+        availableCalendarFormats: const {
+          CalendarFormat.week: '주간', // ✅ 월간 전환 막기
+        },
+        daysOfWeekHeight: 24,
+        rowHeight: MediaQuery.of(context).size.height * 0.07, // ✅ 높이 줄임
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        },
+        headerVisible: false,
+        calendarStyle: CalendarStyle(
+          defaultTextStyle: TextStyle(
+            fontFamily: AppFonts.primaryFont,
+            fontSize: 16,
+            color: Colors.black,
           ),
-          const SizedBox(height: 12),
-
-          // ✅ 날짜 표시
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: dates.asMap().entries.map((entry) {
-              int idx = entry.key;
-              int date = entry.value;
-              final bool isSelected = idx == selectedIndex;
-
-              return Expanded(
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: isSelected
-                        ? BoxDecoration(
-                      color: Palette.mainRed,
-                      shape: BoxShape.circle,
-                    )
-                        : null,
-                    child: Text(
-                      '$date',
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+          weekendTextStyle: TextStyle(
+            fontFamily: AppFonts.primaryFont,
+            fontSize: 16,
+            color: Palette.mainRed,
           ),
-        ],
+          todayDecoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Palette.mainRed),
+          ),
+          selectedDecoration: const BoxDecoration(
+            color: Palette.mainRed,
+            shape: BoxShape.circle,
+          ),
+        ),
+        daysOfWeekStyle: DaysOfWeekStyle(
+          weekdayStyle: TextStyle(
+            fontFamily: AppFonts.primaryFont,
+            color: Colors.black87,
+            fontSize: 14,
+          ),
+          weekendStyle: TextStyle(
+            fontFamily: AppFonts.primaryFont,
+            color: Palette.mainRed,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }
