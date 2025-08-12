@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../services/auth_service.dart';
+import 'connect_complete_screen.dart';
 
 class ConnectPartnerScreen extends StatefulWidget {
   const ConnectPartnerScreen({super.key});
@@ -15,14 +17,14 @@ class _ConnectPartnerScreenState extends State<ConnectPartnerScreen> {
   final AuthService _authService = AuthService();
   bool _loading = false;
 
-  void _connectPartner() async {
+  Future<void> _connectPartner() async {
+    FocusScope.of(context).unfocus(); // 키보드 닫기
     setState(() => _loading = true);
-    final code = _partnerIdController.text.trim();
+
+    final code = _partnerIdController.text.trim().toUpperCase();
 
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('코드를 입력해주세요.')),
-      );
+      _showSnackBar('초대코드를 입력해주세요.', isError: true);
       setState(() => _loading = false);
       return;
     }
@@ -31,15 +33,23 @@ class _ConnectPartnerScreenState extends State<ConnectPartnerScreen> {
     setState(() => _loading = false);
 
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('배우자와 성공적으로 연결되었습니다!')),
+      _showSnackBar('배우자와 성공적으로 연결되었습니다!', isError: false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ConnectCompleteScreen()),
       );
-      Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('연결 실패: $error')),
-      );
+      _showSnackBar('연결 실패: $error', isError: true);
     }
+  }
+
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: AppFonts.pretendard)),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+      ),
+    );
   }
 
   @override
@@ -83,6 +93,7 @@ class _ConnectPartnerScreenState extends State<ConnectPartnerScreen> {
                       Expanded(
                         child: TextField(
                           controller: _partnerIdController,
+                          textCapitalization: TextCapitalization.characters, // ✅ 자동 대문자
                           style: const TextStyle(fontFamily: AppFonts.pretendard),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
@@ -92,6 +103,7 @@ class _ConnectPartnerScreenState extends State<ConnectPartnerScreen> {
                               fontFamily: AppFonts.pretendard,
                             ),
                           ),
+                          onSubmitted: (_) => _connectPartner(), // ✅ 엔터로 실행
                         ),
                       ),
                     ],
@@ -153,5 +165,4 @@ class _ConnectPartnerScreenState extends State<ConnectPartnerScreen> {
     );
   }
 }
-
 

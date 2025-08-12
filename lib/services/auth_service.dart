@@ -13,7 +13,7 @@ class AuthService {
         DateTime? dday,
       }) async {
     try {
-      // 1) 계정 생성
+      // 1) Auth 계정 생성
       UserCredential cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -21,10 +21,14 @@ class AuthService {
 
       User? user = cred.user;
 
+      // 🔹 인증 토큰 갱신 (중요!)
+      await user?.reload();
+      user = _auth.currentUser;
+
       // 2) displayName 업데이트
       await user?.updateDisplayName(name);
 
-      // 3) Firestore 문서 생성
+      // 3) Firestore에 유저 문서 생성
       await _firestore.collection('users').doc(user!.uid).set({
         'name': name,
         'email': email,
@@ -35,23 +39,33 @@ class AuthService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // 4) 회원가입 직후 자동 로그인을 해제 → 로그인 화면으로 돌아가게 함
-      await _auth.signOut();
-
-      return null; // 성공
+      return null;
     } catch (e) {
       return e.toString();
     }
   }
 
 
+// ====== 유니크 코드 생성기 ======
+  Future<String> _generateUniqueInviteCode() async {
+    while (true) {
+      final code = _generateInviteCode();
+      final snap = await _firestore
+          .collection('users')
+          .where('inviteCode', isEqualTo: code)
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) return code; // 충돌 없음 → 사용
+      // 충돌 시 while문으로 재시도
+    }
+  }
+
+
   Future<String?> login(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return null; // 성공
+      final cred = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      await _ensureInviteCode(cred.user!.uid); // ✅ 보정
+      return null;
     } on FirebaseAuthException catch (e) {
       return e.message ?? '로그인 실패';
     } catch (e) {
@@ -59,52 +73,59 @@ class AuthService {
     }
   }
 
+  Future<void> _ensureInviteCode(String uid) async {
+    final ref = _firestore.collection('users').doc(uid);
+    final doc = await ref.get();
+    if (!doc.exists) return;
+    final data = doc.data()!;
+    if (data['inviteCode'] == null || (data['inviteCode'] as String).isEmpty) {
+      final unique = await _generateUniqueInviteCode();
+      await ref.update({
+        'inviteCode': unique,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+
   Future<String?> linkSpouseByInviteCode(String code) async {
     try {
       final me = _auth.currentUser!;
       final meRef = _firestore.collection('users').doc(me.uid);
 
-      await _firestore.runTransaction((tx) async {
-        // ✅ QuerySnapshot으로 받아야 .docs 사용 가능
-        final partnerQuery = await _firestore
-            .collection('users')
-            .where('inviteCode', isEqualTo: code)
-            .limit(1)
-            .get();
+      // 1. 상대방 찾기
+      final partnerQuery = await _firestore
+          .collection('users')
+          .where('inviteCode', isEqualTo: code)
+          .limit(1)
+          .get();
 
-        if (partnerQuery.docs.isEmpty) {
-          throw Exception('해당 초대코드의 사용자를 찾을 수 없습니다.');
-        }
+      if (partnerQuery.docs.isEmpty) {
+        return '해당 초대코드의 사용자를 찾을 수 없습니다.';
+      }
 
-        final partnerRef = partnerQuery.docs.first.reference;
+      final partnerRef = partnerQuery.docs.first.reference;
 
-        if (partnerRef.id == me.uid) {
-          throw Exception('본인 초대코드로는 연결할 수 없습니다.');
-        }
+      if (partnerRef.id == me.uid) {
+        return '본인 초대코드로는 연결할 수 없습니다.';
+      }
 
-        // ✅ 양쪽 spouseUid 세팅
-        tx.update(meRef, {
-          'spouseUid': partnerRef.id,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        tx.update(partnerRef, {
-          'spouseUid': me.uid,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+      // 2. 내 문서 수정
+      await meRef.update({
+        'spouseUid': partnerRef.id,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'emotion': null,
+        'fatigue': 0,
+        'dday': null,
+      });
 
-        // ✅ 감정 & 피로도 공유 필드 초기화
-        tx.update(meRef, {
-          'emotion': null, // 예: "happy", "sad"
-          'fatigue': 0,    // 숫자 (0~100)
-        });
-        tx.update(partnerRef, {
-          'emotion': null,
-          'fatigue': 0,
-        });
-
-        // ✅ 디데이 필드 초기화 (추후 UI에서 설정 가능)
-        tx.update(meRef, {'dday': null});
-        tx.update(partnerRef, {'dday': null});
+      // 3. 상대방 문서 수정
+      await partnerRef.update({
+        'spouseUid': me.uid,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'emotion': null,
+        'fatigue': 0,
+        'dday': null,
       });
 
       return null;
@@ -112,6 +133,7 @@ class AuthService {
       return e.toString();
     }
   }
+
 
   Future<void> updateEmotion(String emotion) async {
     final uid = _auth.currentUser!.uid;
