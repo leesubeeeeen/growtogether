@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/emotion_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class EmotionProvider with ChangeNotifier {
   String? _feeling;
@@ -18,17 +20,24 @@ class EmotionProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void saveTodayEmotion() {
-    final newEmotion = EmotionModel(
-      feeling: _feeling ?? '😐',
-      fatigue: _fatigue,
-      timestamp: DateTime.now(),
-    );
-    _emotions.add(newEmotion);
+  Future<void> saveTodayEmotion() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception("로그인 상태가 아닙니다");
+
+    final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('emotions')
+        .doc(todayKey)
+        .set({
+      'feeling': _feeling ?? '😐',
+      'fatigue': (_fatigue * 100).round(),
+      'timestamp': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
     notifyListeners();
   }
 
-  final List<EmotionModel> _emotions = [];
-  List<EmotionModel> get emotions => _emotions;
 }
-
