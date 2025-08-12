@@ -107,7 +107,7 @@ class _MoodBoxState extends State<MoodBox> {
             child: ElevatedButton(
               onPressed: () async {
                 try {
-                  await provider.saveTodayEmotion();
+                  provider.saveTodayEmotion();
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
