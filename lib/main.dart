@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
@@ -22,6 +22,7 @@ import 'screens/signup_screen.dart';
 import 'screens/settings_screen.dart';
 
 import 'firebase_options.dart';
+import 'widgets/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,18 +70,10 @@ class MyApp extends StatelessWidget {
         '/chat': (context) => const CounselorSelectionPage(),
         '/calendar': (context) => const CalendarScreen(),
       },
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasData) {
-            return const HomePage();
-          }
-          return const StartScreen();
-        },
-      ),
+      home: const AuthGate(),
+
+
     );
+
   }
 }

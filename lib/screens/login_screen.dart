@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
+//import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
-import 'home_page.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +12,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthService _authService = AuthService(); // ✅ 인스턴스 생성
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -20,21 +20,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     setState(() => _loading = true);
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
-    } on FirebaseAuthException catch (e) {
+
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    // AuthService에서 null이면 성공, 아니면 에러 메시지
+    final error = await _authService.login(email, password);
+
+    setState(() => _loading = false);
+
+    if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? '로그인 실패')),
+        SnackBar(content: Text('로그인 실패: $error')),
       );
-    } finally {
-      setState(() => _loading = false);
+    }
+    // ✅ 네비게이션은 하지 않음. AuthGate가 자동으로 화면 전환
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/home'); // ✅ 로그인 성공 시 바로 이동
     }
   }
 
@@ -82,23 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: h * 0.065,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-                          email: emailController.text.trim(),
-                          password: passwordController.text.trim(),
-                        );
-
-                        if (credential.user != null) {
-                          Navigator.pushReplacementNamed(context, '/connect-complete');
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('로그인 실패: ${e.toString()}')),
-                        );
-                      }
-                    },
-
+                    onPressed: _loading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Palette.mainRed,
                       shape: RoundedRectangleBorder(
