@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
-//import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
@@ -29,6 +29,15 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // ✅ dotenv 로드 시 로그 출력
+  try {
+    await dotenv.load(fileName: ".env");
+    print("✅ .env 로드 성공: ${dotenv.env['OPENAI_API_KEY']}");
+  } catch (e) {
+    print("⚠️ .env 로드 실패: $e");
+  }
+
   await initializeDateFormatting('ko_KR', null);
   runApp(const AppRoot());
 }
@@ -71,9 +80,6 @@ class MyApp extends StatelessWidget {
         '/calendar': (context) => const CalendarScreen(),
       },
       home: const AuthGate(),
-
-
     );
-
   }
 }
