@@ -8,6 +8,7 @@ class EmotionProvider with ChangeNotifier {
   double _fatigue = 0.0;
 
   String? get feeling => _feeling;
+
   double get fatigue => _fatigue;
 
   void setFeeling(String emoji) {
@@ -20,24 +21,21 @@ class EmotionProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveTodayEmotion() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) throw Exception("로그인 상태가 아닙니다");
-
+  void saveTodayEmotion() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
     final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('emotions')
-        .doc(todayKey)
+        .doc(todayKey) // 날짜를 doc ID로
         .set({
       'feeling': _feeling ?? '😐',
-      'fatigue': (_fatigue * 100).round(),
+      'fatigue': _fatigue,
       'timestamp': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    });
 
     notifyListeners();
   }
-
 }
