@@ -105,12 +105,23 @@ class _MoodBoxState extends State<MoodBox> {
             width: double.infinity,
             height: 45,
             child: ElevatedButton(
-              onPressed: () {
-                provider.saveTodayEmotion();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
-                );
+              onPressed: () async {
+                try {
+                  await provider.saveTodayEmotion();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("저장 실패: $e")),
+                    );
+                  }
+                }
               },
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.mainRed,
                 shape: RoundedRectangleBorder(
