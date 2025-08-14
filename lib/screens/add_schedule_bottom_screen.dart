@@ -3,7 +3,19 @@ import 'package:flutter/material.dart';
 class AddScheduleBottomScreen extends StatefulWidget {
   final Function(Map<String, String>) onScheduleAdded;
 
-  const AddScheduleBottomScreen({required this.onScheduleAdded, super.key});
+  final String? initialTitle;
+  final TimeOfDay? initialStartTime;
+  final TimeOfDay? initialEndTime;
+  final Set<String>? initialDays;
+
+  const AddScheduleBottomScreen({
+    required this.onScheduleAdded,
+    this.initialTitle,
+    this.initialStartTime,
+    this.initialEndTime,
+    this.initialDays,
+    super.key,
+  });
 
   @override
   State<AddScheduleBottomScreen> createState() => _AddScheduleBottomScreenState();
@@ -17,6 +29,25 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
   Set<String> selectedDays = {};
 
   final List<String> weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ 수정모드면 초기값 세팅
+    if (widget.initialTitle != null) {
+      titleController.text = widget.initialTitle!;
+    }
+    if (widget.initialStartTime != null) {
+      startTime = widget.initialStartTime;
+    }
+    if (widget.initialEndTime != null) {
+      endTime = widget.initialEndTime;
+    }
+    if (widget.initialDays != null) {
+      selectedDays = Set.from(widget.initialDays!);
+    }
+  }
 
   void _submit() {
     if (titleController.text.isEmpty || startTime == null || endTime == null || selectedDays.isEmpty) {
@@ -176,7 +207,7 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: Text('일정 저장하기'),
+              child: Text(widget.initialTitle != null ? '일정 수정하기' : '일정 저장하기'),
             ),
           ],
         ),

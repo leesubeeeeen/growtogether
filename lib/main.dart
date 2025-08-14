@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+// Providers
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
 import 'providers/emotion_provider.dart';
 import 'providers/todo_provider.dart';
+import 'providers/calendar_provider.dart';
 
+// Screens
 import 'screens/home_page.dart';
 import 'screens/todo_page.dart';
 import 'screens/todo_ai_page.dart';
@@ -21,24 +25,34 @@ import 'screens/start_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/settings_screen.dart';
 
+// Firebase / Auth
 import 'firebase_options.dart';
 import 'widgets/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 1) Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // ✅ dotenv 로드 시 로그 출력
+  // 2) .env (웹에서는 건너뜀)
   try {
-    await dotenv.load(fileName: ".env");
-    print("✅ .env 로드 성공: ${dotenv.env['OPENAI_API_KEY']}");
+    if (!kIsWeb) {
+      await dotenv.load(fileName: ".env");
+      // 필요 시 로그 확인
+      // ignore: avoid_print
+      print("✅ .env 로드 성공: ${dotenv.env['OPENAI_API_KEY']}");
+    }
   } catch (e) {
+    // ignore: avoid_print
     print("⚠️ .env 로드 실패: $e");
   }
 
+  // 3) Intl
   await initializeDateFormatting('ko_KR', null);
+
   runApp(const AppRoot());
 }
 
@@ -53,6 +67,7 @@ class AppRoot extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PartnerProvider()),
         ChangeNotifierProvider(create: (_) => EmotionProvider()),
         ChangeNotifierProvider(create: (_) => TodoProvider()),
+        ChangeNotifierProvider(create: (_) => CalendarProvider()),
       ],
       child: const MyApp(),
     );
@@ -67,7 +82,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Grow Together',
+      // 시작점: 인증 게이트(로그인 상태에 따라 분기)
+      home: const AuthGate(),
+      // 모든 라우트를 합집합으로 등록
       routes: {
+        '/start': (context) => const StartScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/settings': (context) => const SettingsScreen(),
@@ -79,7 +98,6 @@ class MyApp extends StatelessWidget {
         '/chat': (context) => const CounselorSelectionPage(),
         '/calendar': (context) => const CalendarScreen(),
       },
-      home: const AuthGate(),
     );
   }
 }
