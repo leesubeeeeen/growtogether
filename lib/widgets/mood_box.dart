@@ -80,6 +80,9 @@ class _MoodBoxState extends State<MoodBox> {
             ),
             child: Slider(
               value: fatigueValue,
+              min: 0,
+              max: 100,
+              divisions: 100,
               onChanged: (value) {
                 provider.setFatigue(value);
               },
@@ -92,7 +95,7 @@ class _MoodBoxState extends State<MoodBox> {
               const Icon(Icons.bolt, color: Palette.calmYellow, size: 20),
               const SizedBox(width: 6),
               Text(
-                '${(fatigueValue * 100).toInt()}%',
+                '${fatigueValue.toInt()}%',
                 style: const TextStyle(
                   fontSize: 16,
                   fontFamily: AppFonts.primaryFont,
