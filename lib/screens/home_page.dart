@@ -170,7 +170,9 @@ class _HomePageState extends State<HomePage> {
 
       final data = emotionDoc.data()!;
       final feeling = data['feeling'] ?? '😐';
-      final fatigue = data['fatigue'] ?? 0;
+      final rawFatigue = data['fatigue'] ?? 0.0; // double로 받아오기
+      final fatigue = (rawFatigue).toInt(); // 정수 % 변환
+
 
       // 3. 팝업 띄우기
       _showDialog(
