@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 import 'providers/user_provider.dart';
 import 'providers/partner_provider.dart';
@@ -22,12 +24,20 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp();
+
+    // ✅ Firestore 오프라인 캐시 활성화
+    FirebaseFirestore.instance.settings =
+    const Settings(persistenceEnabled: true);
+
+    // ✅ 날짜 한국어 로컬라이즈
     await initializeDateFormatting('ko_KR', null);
   } catch (e, st) {
     debugPrint('🚨 Firebase/Intl 초기화 실패: $e\n$st');
   }
+
   runApp(const AppRoot());
 }
+
 
 class AppRoot extends StatelessWidget {
   const AppRoot({super.key});
