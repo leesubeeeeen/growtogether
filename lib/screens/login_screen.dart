@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
-import 'signup_screen.dart';
-import 'connect_complete_screen.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,10 +12,33 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthService _authService = AuthService(); // ✅ 인스턴스 생성
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
   bool _obscurePassword = true;
+  bool _loading = false;
+
+  Future<void> _login() async {
+    setState(() => _loading = true);
+
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    // AuthService에서 null이면 성공, 아니면 에러 메시지
+    final error = await _authService.login(email, password);
+
+    setState(() => _loading = false);
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('로그인 실패: $error')),
+      );
+    }
+    // ✅ 네비게이션은 하지 않음. AuthGate가 자동으로 화면 전환
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/home'); // ✅ 로그인 성공 시 바로 이동
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,16 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              left: w * 0.06,
-              right: w * 0.06,
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: w * 0.06),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: h * 0.05),
-
                 Text(
                   '접속 완료!\n같이 키우기 시작!',
                   style: TextStyle(
@@ -48,83 +66,34 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontFamily: AppFonts.pretendard,
                   ),
                 ),
-
                 SizedBox(height: h * 0.07),
-
-                // 이메일 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: emailController,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: const InputDecoration(
-                      icon: Icon(Icons.email_outlined, color: Palette.black),
-                      hintText: '이메일을 입력해주세요',
-                      hintStyle: TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
-                    ),
-                  ),
+                _buildInputField(
+                  controller: emailController,
+                  icon: Icons.email_outlined,
+                  hint: '이메일을 입력해주세요',
                 ),
-
                 SizedBox(height: h * 0.025),
-
-                // 비밀번호 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: passwordController,
-                    obscureText: _obscurePassword,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: InputDecoration(
-                      icon: const Icon(Icons.lock_outline, color: Palette.black),
-                      hintText: '비밀번호를 입력해주세요',
-                      hintStyle: const TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: Palette.greyText,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
+                _buildInputField(
+                  controller: passwordController,
+                  icon: Icons.lock_outline,
+                  hint: '비밀번호를 입력해주세요',
+                  isPassword: true,
                 ),
-
                 SizedBox(height: h * 0.07),
-
-                // 로그인 버튼
                 SizedBox(
                   width: double.infinity,
                   height: h * 0.065,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ConnectCompleteScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _loading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Palette.mainRed,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
                       '로그인',
                       style: TextStyle(
                         fontSize: 18,
@@ -135,42 +104,49 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
-                SizedBox(height: h * 0.025),
-
-                // 회원가입 링크
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      '계정이 없으신가요? ',
-                      style: TextStyle(
-                        color: Palette.greyText,
-                        fontFamily: AppFonts.pretendard,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                        );
-                      },
-                      child: const Text(
-                        '회원가입하기',
-                        style: TextStyle(
-                          color: Palette.mainRed,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: AppFonts.pretendard,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required IconData icon,
+    required String hint,
+    bool isPassword = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword ? _obscurePassword : false,
+        decoration: InputDecoration(
+          icon: Icon(icon, color: Palette.black),
+          hintText: hint,
+          hintStyle: const TextStyle(fontFamily: AppFonts.pretendard),
+          border: InputBorder.none,
+          suffixIcon: isPassword
+              ? IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              color: Palette.greyText,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+          )
+              : null,
+        ),
+        style: const TextStyle(fontFamily: AppFonts.pretendard),
       ),
     );
   }

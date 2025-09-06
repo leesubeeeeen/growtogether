@@ -34,6 +34,9 @@ class DefaultFirebaseOptions {
           'DefaultFirebaseOptions have not been configured for windows - '
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
+        return macos;
+      case TargetPlatform.windows:
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -71,5 +74,24 @@ class DefaultFirebaseOptions {
     projectId: 'growtogether-89f1a',
     storageBucket: 'growtogether-89f1a.firebasestorage.app',
     iosBundleId: 'com.example.growtogether',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAPef8BL5-fJl2Rvc5p00hj4xmHd97DK7s',
+    appId: '1:579367707927:ios:7c4c549074d5a4ebc5c352',
+    messagingSenderId: '579367707927',
+    projectId: 'growtogether-89f1a',
+    storageBucket: 'growtogether-89f1a.firebasestorage.app',
+    iosBundleId: 'com.example.growtogether',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyC49-ji7ug19fW9gESLMUupFb6gwH0MciI',
+    appId: '1:579367707927:web:1e910c8f745bbb33c5c352',
+    messagingSenderId: '579367707927',
+    projectId: 'growtogether-89f1a',
+    authDomain: 'growtogether-89f1a.firebaseapp.com',
+    storageBucket: 'growtogether-89f1a.firebasestorage.app',
+    measurementId: 'G-FZ605WG1FP',
   );
 }
