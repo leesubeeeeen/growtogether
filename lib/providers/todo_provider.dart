@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
 
 class TodoProvider with ChangeNotifier {
-  // ✅ title, time을 포함한 Map 리스트로 변경
-  final List<Map<String, String>> _todos = [];
+  final List<Map<String, dynamic>> _todos = [];
 
-  List<Map<String, String>> get todos => List.unmodifiable(_todos);
+  // ✅ 선택된 날짜 추가
+  DateTime _selectedDate = DateTime.now();
 
-  // ✅ Map 구조로 투두 추가
-  void addTodo(Map<String, String> todo) {
+  List<Map<String, dynamic>> get todos => List.unmodifiable(_todos);
+
+  // ✅ 선택된 날짜 getter
+  DateTime get selectedDate => _selectedDate;
+
+  // ✅ 선택된 날짜 setter
+  void selectDate(DateTime date) {
+    _selectedDate = date;
+    notifyListeners();
+  }
+
+  void addTodo(Map<String, dynamic> todo) {
     _todos.add(todo);
     notifyListeners();
   }
 
-  void removeTodo(int index) {
-    if (index >= 0 && index < _todos.length) {
-      _todos.removeAt(index);
-      notifyListeners();
-    }
+  List<Map<String, dynamic>> getTodosForSelectedDay() {
+    return _todos.where((todo) {
+      final todoDate = todo['date'] as DateTime?;
+      return todoDate != null &&
+          todoDate.year == _selectedDate.year &&
+          todoDate.month == _selectedDate.month &&
+          todoDate.day == _selectedDate.day;
+    }).toList();
   }
 
   void clearTodos() {
