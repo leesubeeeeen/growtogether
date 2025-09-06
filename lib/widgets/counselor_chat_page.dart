@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:growtogether/services/gpt_service.dart';
 import 'package:growtogether/theme/palette.dart';
+import 'package:growtogether/widgets/todo_recommend_popup.dart';
+import 'package:provider/provider.dart';
+import 'package:growtogether/providers/todo_provider.dart';
+import 'package:growtogether/utils/gpt_utils.dart';
+import 'package:growtogether/providers/calendar_provider.dart';
+import 'package:growtogether/screens/add_schedule_bottom_screen.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
@@ -24,6 +30,9 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
   final List<Map<String, String>> _chatHistory = [];
   final TextEditingController _controller = TextEditingController();
 
+  bool _showPopup = false;
+  String _todoSuggestion = "";
+
   Future<void> _sendMessage() async {
     final question = _controller.text.trim();
     if (question.isEmpty) return;
@@ -39,11 +48,31 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
     setState(() {
       _chatHistory.add({'role': 'assistant', 'message': result});
     });
+
+    final actions = extractRecommendedActions(result);
+    if (actions.isNotEmpty) {
+      setState(() {
+        _todoSuggestion = actions.first; // 예시: 첫 번째 행동만 보여줌
+        _showPopup = true;
+      });
+    }
   }
+
+  void _addTodoAndCalendar(Map<String, String> todo) {
+    // TodoProvider에 Map 형태로 추가
+    context.read<TodoProvider>().addTodo(todo);
+
+    // Calendar에는 title만 넘겨서 추가
+    final today = DateTime.now();
+    final event = CalendarEvent(title: todo['title'] ?? '제목 없음', date: today);
+    context.read<CalendarProvider>().addEvent(event);
+  }
+
+
 
   List<Map<String, String>> _buildMessagesForGPT(String systemPrompt) {
     final messages = <Map<String, String>>[
-      { "role": "system", "content": systemPrompt },
+      {"role": "system", "content": systemPrompt},
     ];
 
     for (final chat in _chatHistory) {
@@ -55,7 +84,6 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
 
     return messages;
   }
-
 
   Widget _buildChatCard(String role, String message) {
     final isUser = role == 'user';
@@ -80,96 +108,146 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F9F9),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.arrow_back_ios, size: 20),
-                  ),
-                  const SizedBox(width: 8),
-                  CircleAvatar(
-                    backgroundImage: AssetImage(widget.imagePath),
-                    radius: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Column(
+              children: [
+                // 헤더
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Row(
                     children: [
-                      Text(
-                        widget.counselorName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Palette.mainRed,
-                        ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.arrow_back_ios, size: 20),
                       ),
-                      const Text(
-                        '• Online',
-                        style: TextStyle(
-                          color: Color(0xFF4A705E),
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      const SizedBox(width: 8),
+                      CircleAvatar(
+                        backgroundImage: AssetImage(widget.imagePath),
+                        radius: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.counselorName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Palette.mainRed,
+                            ),
+                          ),
+                          const Text(
+                            '• Online',
+                            style: TextStyle(
+                              color: Color(0xFF4A705E),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.settings, color: Palette.greyText),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+                const Text(
+                  '이 시기에는 이런 질문이 많아요 😊',
+                  style: TextStyle(fontSize: 15, color: Palette.black),
+                ),
+                const SizedBox(height: 12),
+
+                // 채팅 리스트
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    itemCount: _chatHistory.length,
+                    itemBuilder: (context, index) {
+                      final role = _chatHistory[index]['role']!;
+                      final message = _chatHistory[index]['message']!;
+                      return _buildChatCard(role, message);
+                    },
+                  ),
+                ),
+
+                // 메시지 입력창
+                Container(
+                  margin: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30.0),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  const Icon(Icons.settings, color: Palette.greyText),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              '이 시기에는 이런 질문이 많아요 😊',
-              style: TextStyle(fontSize: 15, color: Palette.black),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                itemCount: _chatHistory.length,
-                itemBuilder: (context, index) {
-                  final role = _chatHistory[index]['role']!;
-                  final message = _chatHistory[index]['message']!;
-                  return _buildChatCard(role, message);
-                },
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.all(16.0),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30.0),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration.collapsed(
-                        hintText: '궁금한 점을 뭐든지 물어보세요',
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          decoration: const InputDecoration.collapsed(
+                            hintText: '궁금한 점을 뭐든지 물어보세요',
+                          ),
+                        ),
                       ),
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.send, color: Palette.mainRed),
+                        onPressed: _sendMessage,
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Palette.mainRed),
-                    onPressed: _sendMessage,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+
+            // 🟡 추천 일정 팝업
+            if (_showPopup)
+              TodoRecommendPopup(
+                recommendationText: _todoSuggestion,
+                onAdd: () {
+                  _addTodoAndCalendar({
+                    'title': _todoSuggestion,
+                    'time': '시간 미정', // 또는 추천 시간 넣을 수 있으면 넣기
+                  });
+
+                  setState(() => _showPopup = false);
+                },
+                onEdit: () {
+                  setState(() => _showPopup = false); // 팝업 먼저 닫고
+
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (context) => AddScheduleBottomScreen(
+                      onScheduleAdded: (updatedSchedule) {
+                        // ✅ 수정된 일정 저장 처리
+                        _addTodoAndCalendar({
+                          'title': updatedSchedule['title'] ?? _todoSuggestion,
+                          'time': updatedSchedule['time'] ?? '시간 미정',
+                        });
+
+                      },
+                      initialTitle: _todoSuggestion,
+                      initialStartTime: TimeOfDay(hour: 9, minute: 0),
+                      initialEndTime: TimeOfDay(hour: 9, minute: 30),
+                      initialDays: {"월"}, // 기본값 예시, 필요시 수정
+                    ),
+                  );
+                },
+                onDismiss: () => setState(() => _showPopup = false),
+              ),
           ],
         ),
       ),

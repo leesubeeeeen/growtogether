@@ -1,205 +1,153 @@
-import 'package:flutter/material.dart';
-import '../theme/palette.dart';
-import '../theme/fonts.dart';
-import 'login_screen.dart';
+  import 'package:flutter/material.dart';
+  import '../theme/palette.dart';
+  import '../theme/fonts.dart';
+  import '../services/auth_service.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+  class SignUpScreen extends StatefulWidget {
+    const SignUpScreen({super.key});
 
-  @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
-}
+    @override
+    State<SignUpScreen> createState() => _SignUpScreenState();
+  }
 
-class _SignUpScreenState extends State<SignUpScreen> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  class _SignUpScreenState extends State<SignUpScreen> {
+    final AuthService _authService = AuthService();
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
 
-  bool _obscurePassword = true;
+    bool _loading = false;
+    DateTime? _selectedDday; // ✅ 디데이 저장
 
-  @override
-  Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-    final h = MediaQuery.of(context).size.height;
+    void _signUp() async {
+      setState(() => _loading = true);
+      String? error = await _authService.signUp(
+        nameController.text.trim(),
+        emailController.text.trim(),
+        passwordController.text.trim(),
+        dday: _selectedDday, // ✅ DateTime
+      );
+      setState(() => _loading = false);
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Palette.background,
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(
-              left: w * 0.06,
-              right: w * 0.06,
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('회원가입 실패: $error')),
+        );
+      }
+      // ✅ 성공 시 화면 이동 안 함 → AuthGate가 자동으로 HomePage로
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    }
 
-                SizedBox(height: h * 0.05),
+    @override
+    Widget build(BuildContext context) {
+      final w = MediaQuery.of(context).size.width;
+      final h = MediaQuery.of(context).size.height;
 
-                Text(
-                  '계정을 만들고\n같이 키워봐요!',
-                  style: TextStyle(
-                    fontSize: w * 0.065,
-                    fontWeight: FontWeight.bold,
-                    color: Palette.mainRed,
-                    fontFamily: AppFonts.pretendard,
-                  ),
-                ),
-
-                SizedBox(height: h * 0.07),
-
-                // 이름 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: nameController,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: const InputDecoration(
-                      icon: Icon(Icons.person_outline, color: Colors.black),
-                      hintText: '이름을 입력해주세요',
-                      hintStyle: TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
+      return Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: Palette.background,
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: w * 0.06),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: h * 0.05),
+                  Text(
+                    '회원가입',
+                    style: TextStyle(
+                      fontSize: w * 0.065,
+                      fontWeight: FontWeight.bold,
+                      color: Palette.mainRed,
+                      fontFamily: AppFonts.pretendard,
                     ),
                   ),
-                ),
+                  SizedBox(height: h * 0.07),
 
-                SizedBox(height: h * 0.025),
+                  _buildTextField(nameController, '이름', Icons.person_outline),
+                  SizedBox(height: h * 0.025),
+                  _buildTextField(emailController, '이메일', Icons.email_outlined),
+                  SizedBox(height: h * 0.025),
+                  _buildTextField(passwordController, '비밀번호', Icons.lock_outline, obscure: true),
+                  SizedBox(height: h * 0.025),
 
-                // 이메일 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: emailController,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: const InputDecoration(
-                      icon: Icon(Icons.email_outlined, color: Colors.black),
-                      hintText: '이메일을 입력해주세요',
-                      hintStyle: TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: h * 0.025),
-
-                // 비밀번호 입력
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-                  child: TextField(
-                    controller: passwordController,
-                    obscureText: _obscurePassword,
-                    style: const TextStyle(fontFamily: AppFonts.pretendard),
-                    decoration: InputDecoration(
-                      icon: const Icon(Icons.lock_outline, color: Colors.black),
-                      hintText: '비밀번호를 입력해주세요',
-                      hintStyle: const TextStyle(fontFamily: AppFonts.pretendard),
-                      border: InputBorder.none,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: h * 0.07),
-
-                // 계정 만들기 버튼
-                SizedBox(
-                  width: double.infinity,
-                  height: h * 0.065,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
+                  // ✅ D-day 선택 버튼
+                  ElevatedButton(
+                    onPressed: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
                       );
+                      if (picked != null) {
+                        setState(() => _selectedDday = picked);
+                      }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Palette.mainRed,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      '계정 만들기',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: AppFonts.pretendard,
-                        color: Palette.background,
-                      ),
+                    child: Text(
+                      _selectedDday == null
+                          ? 'D-day 선택'
+                          : '선택된 D-day: ${_selectedDday!.year}-${_selectedDday!.month}-${_selectedDday!.day}',
                     ),
                   ),
-                ),
+                  SizedBox(height: h * 0.07),
 
-                SizedBox(height: h * 0.025),
-
-                // 이미 계정이 있나요? 로그인하기
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      '이미 계정이 있으신가요? ',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontFamily: AppFonts.pretendard,
+                  SizedBox(
+                    width: double.infinity,
+                    height: h * 0.065,
+                    child: ElevatedButton(
+                      onPressed: _loading ? null : _signUp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Palette.mainRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
-                      },
-                      child: const Text(
-                        '로그인하기',
+                      child: _loading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                        '가입하기',
                         style: TextStyle(
-                          color: Palette.mainRed,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: Palette.background,
                           fontFamily: AppFonts.pretendard,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {bool obscure = false}) {
+      final w = MediaQuery.of(context).size.width;
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+        child: TextField(
+          controller: controller,
+          obscureText: obscure,
+          style: const TextStyle(fontFamily: AppFonts.pretendard),
+          decoration: InputDecoration(
+            icon: Icon(icon, color: Palette.black),
+            hintText: hint,
+            hintStyle: const TextStyle(fontFamily: AppFonts.pretendard),
+            border: InputBorder.none,
+          ),
+        ),
+      );
+    }
   }
-}
+

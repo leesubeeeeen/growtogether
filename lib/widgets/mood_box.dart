@@ -80,6 +80,9 @@ class _MoodBoxState extends State<MoodBox> {
             ),
             child: Slider(
               value: fatigueValue,
+              min: 0,
+              max: 100,
+              divisions: 100,
               onChanged: (value) {
                 provider.setFatigue(value);
               },
@@ -92,7 +95,7 @@ class _MoodBoxState extends State<MoodBox> {
               const Icon(Icons.bolt, color: Palette.calmYellow, size: 20),
               const SizedBox(width: 6),
               Text(
-                '${(fatigueValue * 100).toInt()}%',
+                '${fatigueValue.toInt()}%',
                 style: const TextStyle(
                   fontSize: 16,
                   fontFamily: AppFonts.primaryFont,
@@ -105,12 +108,23 @@ class _MoodBoxState extends State<MoodBox> {
             width: double.infinity,
             height: 45,
             child: ElevatedButton(
-              onPressed: () {
-                provider.saveTodayEmotion();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
-                );
+              onPressed: () async {
+                try {
+                  provider.saveTodayEmotion();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("오늘 감정이 저장되었습니다")),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("저장 실패: $e")),
+                    );
+                  }
+                }
               },
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.mainRed,
                 shape: RoundedRectangleBorder(
