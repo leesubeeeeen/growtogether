@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
-
-class CalendarEvent {
-  final String title;
-  final DateTime date;
-
-  CalendarEvent({required this.title, required this.date});
-}
+import 'package:growtogether/models/calendar_event.dart';
 
 class CalendarProvider with ChangeNotifier {
   final List<CalendarEvent> _events = [];
@@ -14,6 +8,7 @@ class CalendarProvider with ChangeNotifier {
 
   void addEvent(CalendarEvent event) {
     _events.add(event);
+    _events.sort((a, b) => a.start.compareTo(b.start)); // 시간순 정렬
     notifyListeners();
   }
 
@@ -24,9 +19,9 @@ class CalendarProvider with ChangeNotifier {
 
   List<CalendarEvent> getEventsForDay(DateTime day) {
     return _events.where((e) =>
-    e.date.year == day.year &&
-        e.date.month == day.month &&
-        e.date.day == day.day
+    e.start.year == day.year &&
+        e.start.month == day.month &&
+        e.start.day == day.day
     ).toList();
   }
 }
