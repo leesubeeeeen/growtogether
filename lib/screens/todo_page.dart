@@ -7,7 +7,7 @@ import '../widgets/schedule_item.dart';
 import '../widgets/bottom_navi_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/todo_provider.dart';
-
+import '../providers/calendar_provider.dart';
 
 class TodoPage extends StatelessWidget {
   const TodoPage({super.key});
@@ -125,47 +125,35 @@ class TodoPage extends StatelessWidget {
 
 
   Widget _buildScheduleList(BuildContext context) {
-    final todoProvider = Provider.of<TodoProvider>(context);
-    final todos = todoProvider.todos;
+    final calendar = context.watch<CalendarProvider>();
+    final todos = context.watch<TodoProvider>().todos;
+    final selectedDate = calendar.selectedDate;
+    final events = calendar.getEventsForDay(selectedDate); // ⬅ 이 부분 중요!
 
-    final items = [
-      ScheduleItem(
-        time: '9:15 - 10:00',
-        title: '아이 아침 식사',
-        content: '새우애호박볶음, 무나물, 배추무침',
-        location: '우리집',
-        parent: '마미',
-        icon: Icons.breakfast_dining,
-        color: Palette.mealBox,
-      ),
-      ScheduleItem(
-        time: '10:00 - 11:00',
-        title: '아이 씻기기',
-        content: '물놀이처럼 즐겁게 씻어요',
-        location: '우리집',
-        parent: '대디',
-        icon: Icons.bathtub,
-        color: Palette.washBox,
-      ),
-      ScheduleItem(
-        time: '11:00 - 13:00',
-        title: '아이 유치원 등원',
-        content: '오늘도 씩씩하게 잘 다녀오자!',
-        location: '금빛어린이집',
-        parent: '대디',
-        icon: Icons.directions_bus,
-        color: Palette.schoolBox,
-      ),
-    ];
+    String _formatTimeRange(DateTime start, DateTime end) {
+      String h(DateTime t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      return '${h(start)} - ${h(end)}';
+    }
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       children: [
-        ...items.map((item) => Padding(
+        // 📅 CalendarProvider에서 불러온 일정들
+        ...events.map((event) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: item,
+          child: ScheduleItem(
+            time: _formatTimeRange(event.start, event.end),
+            title: event.title,
+            content: event.content,
+            location: event.location,
+            parent: event.parent,
+            icon: event.icon,
+            color: event.color,
+          ),
         )),
-        const SizedBox(height: 24), // 간격 좀 더 주기
+
+        const SizedBox(height: 24),
+
         if (todos.isNotEmpty)
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
@@ -178,6 +166,7 @@ class TodoPage extends StatelessWidget {
               ),
             ),
           ),
+
         ...todos.map((todo) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: ScheduleItem(
@@ -192,6 +181,6 @@ class TodoPage extends StatelessWidget {
         )),
       ],
     );
-
   }
+
 }
