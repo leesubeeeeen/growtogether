@@ -7,6 +7,7 @@ import 'package:growtogether/providers/todo_provider.dart';
 import 'package:growtogether/utils/gpt_utils.dart';
 import 'package:growtogether/providers/calendar_provider.dart';
 import 'package:growtogether/screens/add_schedule_bottom_screen.dart';
+import 'package:growtogether/models/calendar_event.dart';
 
 class CounselorChatPage extends StatefulWidget {
   final String counselorName;
@@ -62,10 +63,19 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
     // TodoProvider에 Map 형태로 추가
     context.read<TodoProvider>().addTodo(todo);
 
-    // Calendar에는 title만 넘겨서 추가
-    final today = DateTime.now();
-    final event = CalendarEvent(title: todo['title'] ?? '제목 없음', date: today);
-    context.read<CalendarProvider>().addEvent(event);
+    final now = DateTime.now();
+    final event = CalendarEvent(
+      id: 'todo-${now.millisecondsSinceEpoch}', // 고유 ID
+      title: todo['title'] ?? '제목 없음',
+      content: todo['content'] ?? '사용자 추가 일정',
+      location: '장소 없음',
+      parent: '나',
+      start: now,
+      end: now.add(const Duration(minutes: 30)), // 기본 30분짜리
+      icon: Icons.task_alt,
+      color: Colors.grey.shade200, // 또는 Palette.greyBackground
+    );
+
   }
 
 
