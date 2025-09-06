@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_options.dart';
+
 
 
 import 'providers/user_provider.dart';
@@ -23,13 +25,16 @@ import 'screens/start_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp();
+    // ✅ firebase_options.dart 사용해서 플랫폼별 옵션으로 초기화
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-    // ✅ Firestore 오프라인 캐시 활성화
+    // ✅ Firestore 오프라인 캐시 (Android/iOS는 이걸로 충분)
     FirebaseFirestore.instance.settings =
     const Settings(persistenceEnabled: true);
 
-    // ✅ 날짜 한국어 로컬라이즈
+    // ✅ 한국어 날짜 로컬라이즈
     await initializeDateFormatting('ko_KR', null);
   } catch (e, st) {
     debugPrint('🚨 Firebase/Intl 초기화 실패: $e\n$st');
@@ -62,6 +67,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Grow Together',
+      theme: ThemeData(
+        fontFamily: 'BMJUA',
+      ),
+
       // ✅ 시작 화면을 로그인으로
       initialRoute: '/start',
       routes: {
