@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:growtogether/screens/add_schedule_bottom_screen.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../widgets/bottom_navi_bar.dart';
 import 'package:provider/provider.dart';
 import '../providers/todo_provider.dart';
-
 
 class TodoAiPage extends StatefulWidget {
   const TodoAiPage({super.key});
@@ -25,7 +25,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,7 +35,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 뒤로가기
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
@@ -44,7 +42,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   height: 36,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12), // <- 변경됨
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black12,
@@ -57,8 +55,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // 제목
               Center(
                 child: Text(
                   '새로운 작업을 추가해봐요!',
@@ -71,8 +67,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // 부제목
               Text(
                 '무엇을 할까요?',
                 style: TextStyle(
@@ -83,18 +77,16 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // 입력창
               Container(
-                margin: const EdgeInsets.only(bottom: 8), // 그림자 공간 확보
+                margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black26,      // 더 진한 그림자
-                      blurRadius: 8,              // 퍼짐 정도
-                      offset: Offset(0, 4),       // 수직 그림자
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -112,20 +104,14 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       borderSide: BorderSide.none,
                     ),
                     isDense: true,
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    // fillColor: Colors.white,  <-- 이거 빼도 됨 (Container가 이미 white)
-                    filled: false, // TextField 자체 배경 제거
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    filled: false,
                   ),
                   onSubmitted: (_) => _onSubmit(),
                 ),
               ),
-
-
               const SizedBox(height: 24),
-
               if (_showSuggestion) ...[
-                // AI 추천 카드
                 Text(
                   'AI가 추천해요!',
                   style: TextStyle(
@@ -174,7 +160,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 12),
                       Row(
                         children: const [
-                          Icon(Icons.calendar_today, size: 16, color: Palette.mainRed,),
+                          Icon(Icons.calendar_today, size: 16, color: Palette.mainRed),
                           SizedBox(width: 6),
                           Text('5월 28일 (화) 오후 7시', style: TextStyle(fontSize: 14)),
                         ],
@@ -182,7 +168,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: const [
-                          Icon(Icons.person, size: 16, color: Palette.mainRed,),
+                          Icon(Icons.person, size: 16, color: Palette.mainRed),
                           SizedBox(width: 6),
                           Text('대디', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w100)),
                         ],
@@ -190,7 +176,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: const [
-                          Icon(Icons.sync, size: 16, color: Palette.mainRed,),
+                          Icon(Icons.sync, size: 16, color: Palette.mainRed),
                           SizedBox(width: 6),
                           Text('반복 없음', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w100)),
                         ],
@@ -198,24 +184,17 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // 선택 버튼 3개
                 ElevatedButton(
                   onPressed: () {
                     final todoText = _controller.text.trim();
                     if (todoText.isNotEmpty) {
                       Provider.of<TodoProvider>(context, listen: false).addTodo({
                         'title': todoText,
-                        'time': '시간 미정', // 또는 비워둘 수도 있음
+                        'time': '시간 미정',
                       });
-
                       _controller.clear();
-                      setState(() {
-                        _showSuggestion = false;
-                      });
-
+                      setState(() => _showSuggestion = false);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('할 일이 추가되었어요!')),
                       );
@@ -237,11 +216,34 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                   ),
                 ),
-
-
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    final todoText = _controller.text.trim();
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      builder: (context) => AddScheduleBottomScreen(
+                        title: '추천된 일정을 수정해서 추가해볼까요?',
+                        initialTitle: todoText,
+                        initialStartTime: TimeOfDay(hour: 19, minute: 0),
+                        initialEndTime: TimeOfDay(hour: 19, minute: 30),
+                        initialDays: {'화'},
+                        onScheduleAdded: (updatedSchedule) {
+                          context.read<TodoProvider>().addTodo(updatedSchedule);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('일정을 수정해서 추가했어요!')),
+                          );
+                          _controller.clear();
+                          setState(() => _showSuggestion = false);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Palette.lightRed,
                     foregroundColor: Palette.mainRed,
@@ -251,7 +253,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     minimumSize: const Size.fromHeight(48),
                   ),
                   child: const Text(
-                      '조금 수정할게요',
+                    '조금 수정할게요',
                     style: TextStyle(
                       fontFamily: AppFonts.primaryFont,
                       fontWeight: FontWeight.w400,
@@ -270,11 +272,12 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     minimumSize: const Size.fromHeight(48),
                   ),
                   child: const Text(
-                      '제가 직접할래요',
+                    '제가 직접할래요',
                     style: TextStyle(
                       fontFamily: AppFonts.primaryFont,
                       fontWeight: FontWeight.w400,
-                    ),),
+                    ),
+                  ),
                 ),
               ],
             ],
