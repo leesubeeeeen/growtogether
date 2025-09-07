@@ -7,6 +7,7 @@ class AddScheduleBottomScreen extends StatefulWidget {
   final TimeOfDay? initialStartTime;
   final TimeOfDay? initialEndTime;
   final Set<String>? initialDays;
+  final String title; // 🆕 문구 설정 가능
 
   const AddScheduleBottomScreen({
     required this.onScheduleAdded,
@@ -14,13 +15,13 @@ class AddScheduleBottomScreen extends StatefulWidget {
     this.initialStartTime,
     this.initialEndTime,
     this.initialDays,
+    this.title = '육아가 어려운 시간을 알려주세요', // 기본 문구
     super.key,
   });
 
   @override
   State<AddScheduleBottomScreen> createState() => _AddScheduleBottomScreenState();
 }
-
 
 class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
   final TextEditingController titleController = TextEditingController();
@@ -34,7 +35,7 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
   void initState() {
     super.initState();
 
-    // ✅ 수정모드면 초기값 세팅
+    // ✅ 초기값 세팅 (수정 모드 지원)
     if (widget.initialTitle != null) {
       titleController.text = widget.initialTitle!;
     }
@@ -64,43 +65,39 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
     Navigator.pop(context); // ✅ 모달 닫기
   }
 
-
-  @override
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       child: Padding(
         padding: EdgeInsets.only(
           top: 24,
           left: 24,
           right: 24,
-          bottom: MediaQuery
-              .of(context)
-              .viewInsets
-              .bottom + 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // ✅ 동적 문구 사용
             Text(
-              '육아가 어려운 시간을 알려주세요',
-              style: TextStyle(
+              widget.title,
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFD26A5C),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // 일정 이름
-            Align(
+            const Align(
               alignment: Alignment.centerLeft,
               child: Text('일정 이름을 말해주세요',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: titleController,
               decoration: InputDecoration(
@@ -113,15 +110,15 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // 시간 선택
-            Align(
+            const Align(
               alignment: Alignment.centerLeft,
               child: Text('언제부터 언제까지 인가요?',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -139,12 +136,12 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                          startTime == null ? '시작 시간' : startTime!.format(
-                              context)),
+                        startTime == null ? '시작 시간' : startTime!.format(context),
+                      ),
                     ),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
@@ -160,21 +157,22 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                          endTime == null ? '종료 시간' : endTime!.format(context)),
+                        endTime == null ? '종료 시간' : endTime!.format(context),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // 요일 선택
-            Align(
+            const Align(
               alignment: Alignment.centerLeft,
               child: Text('반복 요일을 선택해주세요',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               children: weekdays.map((day) {
@@ -195,14 +193,14 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
               }).toList(),
             ),
 
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             ElevatedButton(
               onPressed: _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFD26A5C),
+                backgroundColor: const Color(0xFFD26A5C),
                 foregroundColor: Colors.white,
-                minimumSize: Size(double.infinity, 48),
+                minimumSize: const Size(double.infinity, 48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
