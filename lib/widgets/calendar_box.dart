@@ -4,16 +4,38 @@ import '../theme/palette.dart';
 import '../theme/fonts.dart';
 
 class CalendarBox extends StatefulWidget {
-  const CalendarBox({super.key});
+  final DateTime initialSelectedDay;
+  final DateTime initialFocusedDay;
+
+  const CalendarBox({
+    super.key,
+    required this.initialSelectedDay,
+    required this.initialFocusedDay,
+  });
 
   @override
   State<CalendarBox> createState() => _CalendarBoxState();
 }
 
 class _CalendarBoxState extends State<CalendarBox> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
-  CalendarFormat _calendarFormat = CalendarFormat.week; // ✅ 기본 주 단위
+  late DateTime _focusedDay;
+  late DateTime _selectedDay;
+  CalendarFormat _calendarFormat = CalendarFormat.week;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusedDay = widget.initialFocusedDay;
+    _selectedDay = widget.initialSelectedDay;
+
+    // 렌더링 보장용 (일부 디바이스에서 첫 진입 시 선택 안 되는 현상 방지)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _focusedDay = widget.initialFocusedDay;
+        _selectedDay = widget.initialSelectedDay;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +52,10 @@ class _CalendarBoxState extends State<CalendarBox> {
         focusedDay: _focusedDay,
         calendarFormat: _calendarFormat,
         availableCalendarFormats: const {
-          CalendarFormat.week: '주간', // ✅ 월간 전환 막기
+          CalendarFormat.week: '주간',
         },
         daysOfWeekHeight: 24,
-        rowHeight: MediaQuery.of(context).size.height * 0.07, // ✅ 높이 줄임
+        rowHeight: MediaQuery.of(context).size.height * 0.07,
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
         onDaySelected: (selectedDay, focusedDay) {
           setState(() {
@@ -60,6 +82,14 @@ class _CalendarBoxState extends State<CalendarBox> {
           selectedDecoration: const BoxDecoration(
             color: Palette.mainRed,
             shape: BoxShape.circle,
+          ),
+          selectedTextStyle: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+          todayTextStyle: TextStyle(
+            color: Palette.mainRed,
+            fontWeight: FontWeight.bold,
           ),
         ),
         daysOfWeekStyle: DaysOfWeekStyle(

@@ -6,7 +6,7 @@ import '../widgets/calendar_box.dart';
 import '../widgets/mood_box.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
-import '../widgets/bottom_navi_bar.dart';
+import 'todo_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,14 +16,32 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _currentIndex = 2;
+
   String? _partnerFeeling;
   int? _partnerFatigue;
+
+  DateTime _focusedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
   DateTime? _dday;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+  }
+
+  void _onItemTapped(int index) {
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const TodoPage()),
+      );
+    } else {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -35,11 +53,10 @@ class _HomePageState extends State<HomePage> {
         .doc(uid)
         .get();
 
-    // D-day 값 불러오기
-    final ts = doc.data()?['dday'];
+    final Timestamp? ts = doc.data()?['dday'];
     if (ts != null) {
       setState(() {
-        _dday = (ts as Timestamp).toDate();
+        _dday = ts.toDate();
       });
     }
   }
@@ -48,15 +65,32 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Palette.background,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Palette.mainRed,
+        unselectedItemColor: Palette.greyText,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.check_box), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTopRow(),
+              _buildDdaySection(),
               const SizedBox(height: 16),
-              const CalendarBox(),
+              CalendarBox(
+                initialFocusedDay: _focusedDay,
+                initialSelectedDay: _selectedDay,
+              ),
               const SizedBox(height: 20),
               const MoodBox(),
               const SizedBox(height: 24),
@@ -66,55 +100,49 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: buildBottomNavBar(context, 2),
-    );
-  }
-
-  Widget _buildTopRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.settings, color: Palette.mainRed),
-          onPressed: () {
-            Navigator.pushNamed(context, '/settings');
-          },
-        ),
-        _buildDdaySection(),
-      ],
     );
   }
 
   Widget _buildDdaySection() {
     final days = _dday != null
-        ? DateTime
-        .now()
-        .difference(_dday!)
-        .inDays
+        ? DateTime.now().difference(_dday!).inDays
         : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        RichText(
-          text: TextSpan(
-            style: TextStyle(
-              fontFamily: AppFonts.primaryFont,
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              color: Palette.black,
-            ),
-            children: [
-              const TextSpan(text: '엄마 아빠 함께한지 '),
-              TextSpan(
-                text: days != null ? '+$days일' : 'D-day 없음',
-                style: const TextStyle(color: Palette.mainRed),
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontFamily: AppFonts.primaryFont,
+                fontSize: 16,
+                fontWeight: FontWeight.w300,
+                color: Palette.black,
               ),
-            ],
+              children: [
+                const TextSpan(text: '엄마 아빠 함께한지 '),
+                TextSpan(
+                  text: days != null ? '+$days일' : 'D-day 없음',
+                  style: const TextStyle(color: Palette.mainRed),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.right,
           ),
-          textAlign: TextAlign.right,
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            '튼튼이와 함께한지 +100일',
+            style: const TextStyle(
+              fontFamily: AppFonts.primaryFont,
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+              color: Palette.greyText,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -128,7 +156,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 12),
           Image.asset(
-            'assets/images/seedling_placeholder.png',
+            'assets/images/plant.png',
             height: 100,
           ),
         ],
@@ -141,12 +169,10 @@ class _HomePageState extends State<HomePage> {
     if (uid == null) return;
 
     try {
-      // 1. 현재 유저의 spouseUid 가져오기
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final spouseUid = userDoc.data()?['spouseUid'];
 
       if (spouseUid == null) {
-        // 배우자 연동 안 됨
         _showDialog(
           title: '연동되지 않음',
           content: '아직 배우자와 연동되지 않았습니다.\n연동 설정으로 이동하시겠습니까?',
@@ -154,7 +180,6 @@ class _HomePageState extends State<HomePage> {
         return;
       }
 
-      // 2. 오늘 날짜 감정 데이터 가져오기
       final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final emotionDoc = await FirebaseFirestore.instance
           .collection('users')
@@ -170,11 +195,9 @@ class _HomePageState extends State<HomePage> {
 
       final data = emotionDoc.data()!;
       final feeling = data['feeling'] ?? '😐';
-      final rawFatigue = data['fatigue'] ?? 0.0; // double로 받아오기
-      final fatigue = (rawFatigue).toInt(); // 정수 % 변환
+      final rawFatigue = data['fatigue'] ?? 0.0;
+      final fatigue = (rawFatigue).toInt();
 
-
-      // 3. 팝업 띄우기
       _showDialog(
         title: '배우자의 감정',
         content: '오늘의 감정: $feeling\n피로도: $fatigue%',
