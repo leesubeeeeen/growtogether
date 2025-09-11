@@ -1,10 +1,23 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:growtogether/screens/add_schedule_bottom_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+
+import 'add_schedule_bottom_screen.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../widgets/bottom_navi_bar.dart';
-import 'package:provider/provider.dart';
 import '../providers/todo_provider.dart';
+
+import '../models/calendar_event.dart';
+import '../models/suggestion.dart';
+import '../services/assignment_engine.dart';
+import '../repos/user_repo.dart';
+import '../repos/event_repo.dart';
+import '../repos/config_repo.dart';
+import '../repos/todo_repo.dart';
 
 class TodoAiPage extends StatefulWidget {
   const TodoAiPage({super.key});
@@ -15,14 +28,52 @@ class TodoAiPage extends StatefulWidget {
 
 class _TodoAiPageState extends State<TodoAiPage> {
   final TextEditingController _controller = TextEditingController();
-  bool _showSuggestion = false;
+  Suggestion? _suggestion; // 추천 결과
+  bool _loading = false;
 
-  void _onSubmit() {
-    if (_controller.text.trim().isNotEmpty) {
-      setState(() {
-        _showSuggestion = true;
-      });
-    }
+  Future<void> _onSubmit() async {
+    final taskTitle = _controller.text.trim();
+    if (taskTitle.isEmpty) return;
+
+    setState(() => _loading = true);
+
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final userRepo = UserRepo();
+    final eventRepo = EventRepo();
+    final configRepo = ConfigRepo();
+
+    final userDoc = await userRepo.userDoc(uid);
+    final partnerUid = userDoc['partnerUid'];
+    final partnerDoc = await userRepo.userDoc(partnerUid);
+
+    final today = DateTime.now();
+
+    // 데이터 불러오기
+    final myEvents = await eventRepo.dayEvents(uid, today);
+    final partnerEvents = await eventRepo.dayEvents(partnerUid, today);
+    final myEmotion = await userRepo.todayEmotion(uid, today);
+    final partnerEmotion = await userRepo.todayEmotion(partnerUid, today);
+    final messages = await configRepo.loadMessagesKo();
+    final slots = await configRepo.loadDefaultSlots();
+
+    // 규칙 엔진 실행
+    final engine = AssignmentEngine(
+      myEvents: myEvents,
+      partnerEvents: partnerEvents,
+      myFatigue: (myEmotion['fatigue'] ?? 0).toDouble(),
+      partnerFatigue: (partnerEmotion['fatigue'] ?? 0).toDouble(),
+      myFeeling: myEmotion['feeling'] ?? '😐',
+      partnerFeeling: partnerEmotion['feeling'] ?? '😐',
+      slots: slots,
+      messages: messages,
+    );
+
+    final suggestion = engine.suggest(taskTitle, today);
+
+    setState(() {
+      _suggestion = suggestion;
+      _loading = false;
+    });
   }
 
   @override
@@ -43,7 +94,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
                         blurRadius: 4,
@@ -51,7 +102,8 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Palette.mainRed),
+                  child: const Icon(Icons.arrow_back_ios_new,
+                      size: 18, color: Palette.mainRed),
                 ),
               ),
               const SizedBox(height: 24),
@@ -82,7 +134,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 8,
@@ -104,14 +156,18 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       borderSide: BorderSide.none,
                     ),
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                     filled: false,
                   ),
                   onSubmitted: (_) => _onSubmit(),
                 ),
               ),
               const SizedBox(height: 24),
-              if (_showSuggestion) ...[
+
+              if (_loading) const Center(child: CircularProgressIndicator()),
+
+              if (_suggestion != null) ...[
                 Text(
                   'AI가 추천해요!',
                   style: TextStyle(
@@ -128,7 +184,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
                         blurRadius: 6,
@@ -140,13 +196,14 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.lightbulb_outline, color: Palette.calmYellow),
-                          SizedBox(width: 8),
+                        children: [
+                          const Icon(Icons.lightbulb_outline,
+                              color: Palette.calmYellow),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '대디의 일정이 최근 많이 비어있어요.\n화요일 오후는 어떠세요?',
-                              style: TextStyle(
+                              _suggestion!.message,
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w300,
                                 color: Palette.black,
@@ -159,18 +216,31 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       Divider(height: 1, color: Palette.greyBorder),
                       const SizedBox(height: 12),
                       Row(
-                        children: const [
-                          Icon(Icons.calendar_today, size: 16, color: Palette.mainRed),
-                          SizedBox(width: 6),
-                          Text('5월 28일 (화) 오후 7시', style: TextStyle(fontSize: 14)),
+                        children: [
+                          const Icon(Icons.calendar_today,
+                              size: 16, color: Palette.mainRed),
+                          const SizedBox(width: 6),
+                          Text(
+                            DateFormat('M월 d일 (E) a h:mm', 'ko_KR')
+                                .format(_suggestion!.start),
+                            style: const TextStyle(fontSize: 14),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       Row(
-                        children: const [
-                          Icon(Icons.person, size: 16, color: Palette.mainRed),
-                          SizedBox(width: 6),
-                          Text('대디', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w100)),
+                        children: [
+                          const Icon(Icons.person,
+                              size: 16, color: Palette.mainRed),
+                          const SizedBox(width: 6),
+                          Text(
+                            _suggestion!.assignedTo == 'me'
+                                ? "나"
+                                : "배우자",
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w100),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -178,7 +248,10 @@ class _TodoAiPageState extends State<TodoAiPage> {
                         children: const [
                           Icon(Icons.sync, size: 16, color: Palette.mainRed),
                           SizedBox(width: 6),
-                          Text('반복 없음', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w100)),
+                          Text('반복 없음',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w100)),
                         ],
                       ),
                     ],
@@ -186,15 +259,26 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final todoText = _controller.text.trim();
                     if (todoText.isNotEmpty) {
-                      Provider.of<TodoProvider>(context, listen: false).addTodo({
-                        'title': todoText,
-                        'time': '시간 미정',
-                      });
+                      final uid = FirebaseAuth.instance.currentUser!.uid;
+                      final userDoc = await UserRepo().userDoc(uid);
+                      final partnerUid = userDoc['partnerUid'];
+                      final targetUid = _suggestion!.assignedTo == 'me'
+                          ? uid
+                          : partnerUid;
+
+                      await TodoRepo().saveTodoAndEvent(
+                        targetUid: targetUid,
+                        title: todoText,
+                        start: _suggestion!.start,
+                        end: _suggestion!.end,
+                        assignedTo: _suggestion!.assignedTo,
+                      );
+
                       _controller.clear();
-                      setState(() => _showSuggestion = false);
+                      setState(() => _suggestion = null);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('할 일이 추가되었어요!')),
                       );
@@ -224,21 +308,36 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
                       ),
                       builder: (context) => AddScheduleBottomScreen(
                         title: '추천된 일정을 수정해서 추가해볼까요?',
                         initialTitle: todoText,
-                        initialStartTime: TimeOfDay(hour: 19, minute: 0),
-                        initialEndTime: TimeOfDay(hour: 19, minute: 30),
-                        initialDays: {'화'},
-                        onScheduleAdded: (updatedSchedule) {
-                          context.read<TodoProvider>().addTodo(updatedSchedule);
+                        initialStartTime: TimeOfDay.fromDateTime(_suggestion!.start),
+                        initialEndTime: TimeOfDay.fromDateTime(_suggestion!.end),
+                        initialDays: {DateFormat.E('ko_KR').format(_suggestion!.start)},
+                        onScheduleAdded: (updatedSchedule) async {
+                          final uid = FirebaseAuth.instance.currentUser!.uid;
+                          final userDoc = await UserRepo().userDoc(uid);
+                          final partnerUid = userDoc['partnerUid'];
+                          final targetUid = _suggestion!.assignedTo == 'me'
+                              ? uid
+                              : partnerUid;
+
+                          await TodoRepo().saveTodoAndEvent(
+                            targetUid: targetUid,
+                            title: updatedSchedule['title'], // 오타 수정
+                            start: _suggestion!.start,
+                            end: _suggestion!.end,
+                            assignedTo: _suggestion!.assignedTo,
+                          );
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('일정을 수정해서 추가했어요!')),
                           );
                           _controller.clear();
-                          setState(() => _showSuggestion = false);
+                          setState(() => _suggestion = null);
                           Navigator.pop(context);
                         },
                       ),
@@ -262,7 +361,10 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _controller.clear();
+                    setState(() => _suggestion = null);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Palette.greyBackground,
                     foregroundColor: Palette.greyText,

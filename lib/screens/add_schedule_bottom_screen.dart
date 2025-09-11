@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class AddScheduleBottomScreen extends StatefulWidget {
-  final Function(Map<String, String>) onScheduleAdded;
+  final Function(Map<String, dynamic>) onScheduleAdded; // 🔥 String → dynamic
 
   final String? initialTitle;
   final TimeOfDay? initialStartTime;
   final TimeOfDay? initialEndTime;
   final Set<String>? initialDays;
-  final String title; // 🆕 문구 설정 가능
+  final String title;
 
   const AddScheduleBottomScreen({
     required this.onScheduleAdded,
@@ -15,12 +15,13 @@ class AddScheduleBottomScreen extends StatefulWidget {
     this.initialStartTime,
     this.initialEndTime,
     this.initialDays,
-    this.title = '육아가 어려운 시간을 알려주세요', // 기본 문구
+    this.title = '육아가 어려운 시간을 알려주세요',
     super.key,
   });
 
   @override
-  State<AddScheduleBottomScreen> createState() => _AddScheduleBottomScreenState();
+  State<AddScheduleBottomScreen> createState() =>
+      _AddScheduleBottomScreenState();
 }
 
 class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
@@ -34,8 +35,6 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
   @override
   void initState() {
     super.initState();
-
-    // ✅ 초기값 세팅 (수정 모드 지원)
     if (widget.initialTitle != null) {
       titleController.text = widget.initialTitle!;
     }
@@ -51,18 +50,41 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
   }
 
   void _submit() {
-    if (titleController.text.isEmpty || startTime == null || endTime == null || selectedDays.isEmpty) {
-      return; // 유효성 검사
+    if (titleController.text.isEmpty ||
+        startTime == null ||
+        endTime == null ||
+        selectedDays.isEmpty) {
+      return;
     }
+
+    final now = DateTime.now();
+
+    // TimeOfDay → DateTime 변환
+    final startDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      startTime!.hour,
+      startTime!.minute,
+    );
+
+    final endDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      endTime!.hour,
+      endTime!.minute,
+    );
 
     final newSchedule = {
       'title': titleController.text,
-      'time': '${startTime!.format(context)} - ${endTime!.format(context)}',
-      'days': selectedDays.join(', ')
+      'start': startDateTime, // 🔥 DateTime으로 전달
+      'end': endDateTime,
+      'days': selectedDays.toList(),
     };
 
-    widget.onScheduleAdded(newSchedule); // ✅ 콜백 실행
-    Navigator.pop(context); // ✅ 모달 닫기
+    widget.onScheduleAdded(newSchedule); // 콜백 실행
+    Navigator.pop(context);
   }
 
   @override
@@ -80,7 +102,6 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ✅ 동적 문구 사용
             Text(
               widget.title,
               style: const TextStyle(
@@ -90,8 +111,7 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // 일정 이름
+            // 제목
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('일정 이름을 말해주세요',
@@ -111,8 +131,7 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // 시간 선택
+            // 시간
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('언제부터 언제까지 인가요?',
@@ -125,7 +144,9 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                   child: GestureDetector(
                     onTap: () async {
                       final picked = await showTimePicker(
-                          context: context, initialTime: TimeOfDay.now());
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
                       if (picked != null) setState(() => startTime = picked);
                     },
                     child: Container(
@@ -136,7 +157,9 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                        startTime == null ? '시작 시간' : startTime!.format(context),
+                        startTime == null
+                            ? '시작 시간'
+                            : startTime!.format(context),
                       ),
                     ),
                   ),
@@ -146,7 +169,9 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                   child: GestureDetector(
                     onTap: () async {
                       final picked = await showTimePicker(
-                          context: context, initialTime: TimeOfDay.now());
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
                       if (picked != null) setState(() => endTime = picked);
                     },
                     child: Container(
@@ -157,7 +182,9 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
-                        endTime == null ? '종료 시간' : endTime!.format(context),
+                        endTime == null
+                            ? '종료 시간'
+                            : endTime!.format(context),
                       ),
                     ),
                   ),
@@ -165,7 +192,6 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
               ],
             ),
             const SizedBox(height: 24),
-
             // 요일 선택
             const Align(
               alignment: Alignment.centerLeft,
@@ -192,9 +218,7 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                 );
               }).toList(),
             ),
-
             const SizedBox(height: 24),
-
             ElevatedButton(
               onPressed: _submit,
               style: ElevatedButton.styleFrom(

@@ -7,25 +7,26 @@ class SchedulePreferencePage extends StatefulWidget {
 }
 
 class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
-  final Color mainColor = Color(0xFFD26A5C);
+  final Color mainColor = const Color(0xFFD26A5C);
   final TextEditingController _nicknameController = TextEditingController();
 
-  List<Map<String, String>> schedules = [];
+  // 🔥 String → dynamic (DateTime도 들어가기 때문에)
+  List<Map<String, dynamic>> schedules = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF9F9F9),
+      backgroundColor: const Color(0xFFF9F9F9),
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -41,49 +42,54 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
                 ),
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
+
+            // step 1
             Row(
               children: [
                 Icon(Icons.looks_one, color: mainColor),
-                SizedBox(width: 8),
-                Text(
+                const SizedBox(width: 8),
+                const Text(
                   '상대방의 애칭을 정해주세요',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             TextField(
               controller: _nicknameController,
               decoration: InputDecoration(
                 hintText: '상대방을 부르고 싶은 이름을 알려주세요',
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
-            SizedBox(height: 32),
+
+            const SizedBox(height: 32),
+
+            // step 2
             Row(
               children: [
                 Icon(Icons.looks_two, color: mainColor),
-                SizedBox(width: 8),
-                Text(
+                const SizedBox(width: 8),
+                const Text(
                   '고정적인 스케줄이 있나요?',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                   ),
                   builder: (context) {
@@ -97,29 +103,31 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
                   },
                 );
               },
-
-              icon: Icon(Icons.add),
-              label: Text('추가'),
+              icon: const Icon(Icons.add),
+              label: const Text('추가'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFFF2ED),
+                backgroundColor: const Color(0xFFFFF2ED),
                 foregroundColor: mainColor,
                 elevation: 0,
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                   side: BorderSide(color: mainColor.withOpacity(0.3)),
                 ),
               ),
             ),
-            SizedBox(height: 20),
+
+            const SizedBox(height: 20),
+
+            // 리스트 표시
             ...schedules.map((schedule) => Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 6,
@@ -133,30 +141,36 @@ class _SchedulePreferencePageState extends State<SchedulePreferencePage> {
                     Row(
                       children: [
                         Icon(Icons.lightbulb_outline, color: mainColor),
-                        SizedBox(width: 8),
-                        Text(schedule['title'] ?? '', style: TextStyle(fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Text(
+                          schedule['title'] ?? '',
+                          style: const TextStyle(fontSize: 16),
+                        ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(Icons.calendar_today, color: mainColor, size: 16),
-                        SizedBox(width: 4),
-                        Text(schedule['time'] ?? ''),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${schedule['start'].hour}:${schedule['start'].minute.toString().padLeft(2, '0')}'
+                              ' - ${schedule['end'].hour}:${schedule['end'].minute.toString().padLeft(2, '0')}',
+                        ),
                       ],
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.sync, color: mainColor, size: 16),
-                        SizedBox(width: 4),
-                        Text(schedule['days'] ?? ''),
+                        const SizedBox(width: 4),
+                        Text((schedule['days'] as List).join(', ')),
                       ],
                     ),
                   ],
                 ),
               ),
-            ))
+            )),
           ],
         ),
       ),
