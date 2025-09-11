@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
+import 'package:intl/date_symbol_data_local.dart'; // ✅ locale 지원
 
 class CalendarBox extends StatefulWidget {
   const CalendarBox({super.key});
@@ -20,7 +21,10 @@ class _CalendarBoxState extends State<CalendarBox> {
     super.initState();
     final now = DateTime.now();
     _focusedDay = DateTime(now.year, now.month, now.day);
-    _selectedDay = _focusedDay; // ✅ 앱 첫 진입에 오늘 자동 선택
+    _selectedDay = _focusedDay;
+
+    // ✅ 한국어 날짜 포맷 초기화
+    initializeDateFormatting('ko_KR', null);
   }
 
   @override
@@ -32,6 +36,7 @@ class _CalendarBoxState extends State<CalendarBox> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: TableCalendar(
+        locale: 'ko_KR', // ✅ 요일 한국어 표시
         firstDay: DateTime.utc(2010, 1, 1),
         lastDay: DateTime.utc(2040, 12, 31),
         focusedDay: _focusedDay,
