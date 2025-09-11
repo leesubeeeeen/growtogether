@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
+import 'package:intl/date_symbol_data_local.dart'; // ✅ locale 지원
 
 class CalendarBox extends StatefulWidget {
   const CalendarBox({super.key});
@@ -20,6 +21,9 @@ class _CalendarBoxState extends State<CalendarBox> {
     final now = DateTime.now();
     _focusedDay = DateTime(now.year, now.month, now.day);
     _selectedDay = _focusedDay;
+
+    // ✅ 한국어 날짜 포맷 초기화
+    initializeDateFormatting('ko_KR', null);
   }
 
   @override
@@ -37,23 +41,24 @@ class _CalendarBoxState extends State<CalendarBox> {
         focusedDay: _focusedDay,
         calendarFormat: CalendarFormat.week, // ✅ 주간 캘린더
         availableCalendarFormats: const {
-          CalendarFormat.week: '주간', // ✅ 월간 전환 막기
-        },
-        headerVisible: false, // ✅ 상단 월 이름 숨기기
-
-        rowHeight: 44,
-        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-
-        onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
-        },
-        onPageChanged: (focusedDay) {
-          _focusedDay = focusedDay;
+          CalendarFormat.week: '주간', // ✅ 월간으로 바꾸는 버튼 비활성화
         },
 
+        // ✅ 상단 타이틀 & 네비게이션
+        headerStyle: HeaderStyle(
+          titleCentered: true,
+          formatButtonVisible: false,
+          titleTextStyle: TextStyle(
+            fontFamily: AppFonts.primaryFont,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Palette.black,
+          ),
+          leftChevronIcon: const Icon(Icons.chevron_left, color: Palette.black),
+          rightChevronIcon: const Icon(Icons.chevron_right, color: Palette.black),
+        ),
+
+        // ✅ 요일 스타일
         daysOfWeekStyle: DaysOfWeekStyle(
           weekdayStyle: TextStyle(
             fontFamily: AppFonts.primaryFont,
@@ -67,6 +72,10 @@ class _CalendarBoxState extends State<CalendarBox> {
           ),
         ),
 
+        rowHeight: 44, // ✅ 원형 안에 숫자 깔끔히
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+
+        // ✅ 날짜 스타일
         calendarStyle: CalendarStyle(
           outsideDaysVisible: false,
           defaultTextStyle: TextStyle(
@@ -84,6 +93,8 @@ class _CalendarBoxState extends State<CalendarBox> {
             color: Palette.black.withOpacity(0.25),
             fontWeight: FontWeight.w600,
           ),
+
+          // 선택된 날
           selectedDecoration: const BoxDecoration(
             color: Palette.mainRed,
             shape: BoxShape.circle,
@@ -92,6 +103,8 @@ class _CalendarBoxState extends State<CalendarBox> {
             color: Colors.white,
             fontWeight: FontWeight.w800,
           ),
+
+          // 오늘(선택과 구분)
           todayDecoration: BoxDecoration(
             border: Border.all(color: Palette.mainRed, width: 2),
             shape: BoxShape.circle,
@@ -103,6 +116,7 @@ class _CalendarBoxState extends State<CalendarBox> {
           ),
         ),
 
+        // ✅ 숫자가 가려지지 않도록 커스텀 빌더
         calendarBuilders: CalendarBuilders(
           selectedBuilder: (context, day, focusedDay) {
             return Center(
@@ -126,10 +140,7 @@ class _CalendarBoxState extends State<CalendarBox> {
           },
           todayBuilder: (context, day, focusedDay) {
             final isSelected = isSameDay(day, _selectedDay);
-            if (isSelected) {
-              // 선택된 날이면 selectedBuilder가 우선 적용됨
-              return null;
-            }
+            if (isSelected) return null; // 오늘이면서 선택된 날짜는 selectedBuilder 우선
             return Center(
               child: Container(
                 width: 36,
@@ -171,6 +182,17 @@ class _CalendarBoxState extends State<CalendarBox> {
             ),
           ),
         ),
+
+        // ✅ 날짜 선택
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        },
+
+        // ✅ 페이지 변경
+        onPageChanged: (focusedDay) => _focusedDay = focusedDay,
       ),
     );
   }

@@ -19,26 +19,35 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
   Future<void> _login() async {
+    if (_loading) return;
     setState(() => _loading = true);
 
     final email = emailController.text.trim();
-    final password = passwordController.text.trim();
+    final password = passwordController.text; // ← 비밀번호는 trim() 제거
 
-    // AuthService에서 null이면 성공, 아니면 에러 메시지
-    final error = await _authService.login(email, password);
+    String? error;
+    try {
+      // AuthService.login이 성공 시 null, 실패 시 에러 메시지(String) 반환한다고 가정
+      error = await _authService.login(email, password);
+    } catch (e) {
+      error = '알 수 없는 오류가 발생했습니다.';
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
 
-    setState(() => _loading = false);
+    if (!mounted) return;
 
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('로그인 실패: $error')),
       );
+      return; // ← 실패 시 여기서 종료! 네비게이션 금지
     }
-    // ✅ 네비게이션은 하지 않음. AuthGate가 자동으로 화면 전환
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/home'); // ✅ 로그인 성공 시 바로 이동
-    }
+
+    // 성공 시에만 이동
+    Navigator.pushReplacementNamed(context, '/home');
   }
+
 
   @override
   Widget build(BuildContext context) {
