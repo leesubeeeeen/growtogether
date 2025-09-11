@@ -3,10 +3,6 @@ import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
-
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Providers
@@ -29,38 +25,36 @@ import 'screens/start_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/settings_screen.dart';
 
-// Auth
+// Firebase / Auth
+import 'firebase_options.dart';
 import 'widgets/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1) Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // 2) .env (웹에서는 건너뜀)
   try {
-    // ✅ Firebase 초기화
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
-    // ✅ Firestore 오프라인 캐시 설정
-    FirebaseFirestore.instance.settings =
-    const Settings(persistenceEnabled: true);
-
-    // ✅ .env 설정 (웹 제외)
     if (!kIsWeb) {
       await dotenv.load(fileName: ".env");
+      // 필요 시 로그 확인
+      // ignore: avoid_print
       print("✅ .env 로드 성공: ${dotenv.env['OPENAI_API_KEY']}");
     }
-
-    // ✅ Intl 한국어 초기화
-    await initializeDateFormatting('ko_KR', null);
-  } catch (e, st) {
-    debugPrint('🚨 초기화 실패: $e\n$st');
+  } catch (e) {
+    // ignore: avoid_print
+    print("⚠️ .env 로드 실패: $e");
   }
+
+  // 3) Intl
+  await initializeDateFormatting('ko_KR', null);
 
   runApp(const AppRoot());
 }
-
-
 
 class AppRoot extends StatelessWidget {
   const AppRoot({super.key});
@@ -88,12 +82,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Grow Together',
-      theme: ThemeData(
-        fontFamily: 'BMJUA',
-      ),
-
-      // ✅ 시작 화면을 로그인으로
-      initialRoute: '/start',
       // 시작점: 인증 게이트(로그인 상태에 따라 분기)
       home: const AuthGate(),
       // 모든 라우트를 합집합으로 등록
