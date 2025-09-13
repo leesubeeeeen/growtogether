@@ -1,7 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
@@ -9,7 +6,6 @@ import 'add_schedule_bottom_screen.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../widgets/bottom_navi_bar.dart';
-import '../providers/todo_provider.dart';
 
 import '../models/calendar_event.dart';
 import '../models/suggestion.dart';
@@ -49,11 +45,10 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
       final today = DateTime.now();
 
-      // 내 데이터
+      // ✅ AI 추천을 위한 데이터만 읽기
       final myEvents = await eventRepo.dayEvents(uid, today);
       final myEmotion = await userRepo.todayEmotion(uid, today);
 
-      // 배우자 데이터 (없으면 기본값 사용)
       List<CalendarEvent> partnerEvents = [];
       Map<String, dynamic> partnerEmotion = {'fatigue': 0, 'feeling': '😐'};
 
@@ -68,7 +63,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
       final messages = await configRepo.loadMessagesKo();
       final slots = await configRepo.loadDefaultSlots();
 
-      // 규칙 엔진 실행
       final engine = AssignmentEngine(
         myEvents: myEvents,
         partnerEvents: partnerEvents,
@@ -82,6 +76,12 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
       final suggestion = engine.suggest(taskTitle, today);
 
+      // ✅ suggestion 없으면 return
+      if (suggestion == null) {
+        setState(() => _loading = false);
+        return;
+      }
+
       setState(() {
         _suggestion = suggestion;
         _loading = false;
@@ -91,6 +91,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
       setState(() => _loading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

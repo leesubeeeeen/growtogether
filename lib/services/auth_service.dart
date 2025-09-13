@@ -1,178 +1,118 @@
-import 'dart:math';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  Future<String?> signUp(
-      String name,
-      String email,
-      String password, {
-        DateTime? dday,
-      }) async {
+  /// 🔑 회원가입
+  /// 성공 시 null, 실패 시 에러 메시지(String) 반환
+  Future<String?> signUp({
+    required String name,
+    required String email,
+    required String password,
+    DateTime? dday,
+  }) async {
     try {
-      // 1) Auth 계정 생성
-      UserCredential cred = await _auth.createUserWithEmailAndPassword(
+      // Firebase Auth 계정 생성
+      final cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      User? user = cred.user;
+      final uid = cred.user!.uid;
 
-      // 🔹 인증 토큰 갱신 (중요!)
-      await user?.reload();
-      user = _auth.currentUser;
-
-      // 2) displayName 업데이트
-      await user?.updateDisplayName(name);
-
-      // 3) Firestore에 유저 문서 생성
-      await _firestore.collection('users').doc(user!.uid).set({
+      // Firestore users/{uid} 문서 생성
+      await _db.collection('users').doc(uid).set({
         'name': name,
         'email': email,
+        'dday': dday != null ? Timestamp.fromDate(dday) : null,  // ✅ 이렇게 저장
         'spouseUid': null,
+        'fatigue': 0,
         'inviteCode': _generateInviteCode(),
-        'dday': dday != null ? Timestamp.fromDate(dday) : null,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      return null;
+      return null; // 성공 시 null 반환
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        return '이미 사용 중인 이메일입니다.';
+      } else if (e.code == 'invalid-email') {
+        return '유효하지 않은 이메일 형식입니다.';
+      } else if (e.code == 'weak-password') {
+        return '비밀번호가 너무 약합니다.';
+      } else {
+        return '회원가입 실패: ${e.message}';
+      }
     } catch (e) {
-      return e.toString();
+      return '알 수 없는 오류가 발생했습니다: $e';
     }
   }
 
 
-// ====== 유니크 코드 생성기 ======
-  Future<String> _generateUniqueInviteCode() async {
-    while (true) {
-      final code = _generateInviteCode();
-      final snap = await _firestore
-          .collection('users')
-          .where('inviteCode', isEqualTo: code)
-          .limit(1)
-          .get();
-      if (snap.docs.isEmpty) return code; // 충돌 없음 → 사용
-      // 충돌 시 while문으로 재시도
-    }
-  }
 
-
+  /// 🔑 로그인
   Future<String?> login(String email, String password) async {
     try {
-      final cred = await _auth.signInWithEmailAndPassword(email: email, password: password);
-      await _ensureInviteCode(cred.user!.uid); // ✅ 보정
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
       return null;
     } on FirebaseAuthException catch (e) {
-      return e.message ?? '로그인 실패';
+      if (e.code == 'user-not-found') {
+        return '해당 이메일의 사용자가 존재하지 않습니다.';
+      } else if (e.code == 'wrong-password') {
+        return '비밀번호가 올바르지 않습니다.';
+      } else {
+        return '로그인 실패: ${e.message}';
+      }
     } catch (e) {
-      return e.toString();
+      return '알 수 없는 오류가 발생했습니다.';
     }
   }
 
-  Future<void> _ensureInviteCode(String uid) async {
-    final ref = _firestore.collection('users').doc(uid);
-    final doc = await ref.get();
-    if (!doc.exists) return;
-    final data = doc.data()!;
-    if (data['inviteCode'] == null || (data['inviteCode'] as String).isEmpty) {
-      final unique = await _generateUniqueInviteCode();
-      await ref.update({
-        'inviteCode': unique,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    }
-  }
-
-
-  Future<String?> linkSpouseByInviteCode(String code) async {
+  /// 🔗 초대코드로 배우자 연결
+  Future<String?> linkSpouseByInviteCode(String inviteCode) async {
     try {
-      final me = _auth.currentUser!;
-      final meRef = _firestore.collection('users').doc(me.uid);
+      final currentUid = _auth.currentUser?.uid;
+      if (currentUid == null) return "로그인이 필요합니다.";
 
-      // 1. 상대방 찾기
-      final partnerQuery = await _firestore
+      final query = await _db
           .collection('users')
-          .where('inviteCode', isEqualTo: code)
+          .where('inviteCode', isEqualTo: inviteCode)
           .limit(1)
           .get();
 
-      if (partnerQuery.docs.isEmpty) {
-        return '해당 초대코드의 사용자를 찾을 수 없습니다.';
+      if (query.docs.isEmpty) {
+        return "해당 초대코드를 가진 사용자가 없습니다.";
       }
 
-      final partnerRef = partnerQuery.docs.first.reference;
+      final partnerDoc = query.docs.first;
+      final partnerUid = partnerDoc.id;
 
-      if (partnerRef.id == me.uid) {
-        return '본인 초대코드로는 연결할 수 없습니다.';
+      if (partnerUid == currentUid) {
+        return "본인 초대코드는 사용할 수 없습니다.";
       }
 
-      // 2. 내 문서 수정
-      await meRef.update({
-        'spouseUid': partnerRef.id,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'emotion': null,
-        'fatigue': 0,
-        'dday': null,
-      });
+      final batch = _db.batch();
+      final myRef = _db.collection('users').doc(currentUid);
+      final partnerRef = _db.collection('users').doc(partnerUid);
 
-      // 3. 상대방 문서 수정
-      await partnerRef.update({
-        'spouseUid': me.uid,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'emotion': null,
-        'fatigue': 0,
-        'dday': null,
-      });
+      batch.update(myRef, {'spouseUid': partnerUid});
+      batch.update(partnerRef, {'spouseUid': currentUid});
 
+      await batch.commit();
       return null;
     } catch (e) {
-      return e.toString();
+      print("❌ 배우자 연결 에러: $e");
+      return "알 수 없는 오류가 발생했습니다.";
     }
   }
 
-
-  Future<void> updateEmotion(String emotion) async {
-    final uid = _auth.currentUser!.uid;
-    await _firestore.collection('users').doc(uid).update({
-      'emotion': emotion,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> updateFatigue(int fatigue) async {
-    final uid = _auth.currentUser!.uid;
-    await _firestore.collection('users').doc(uid).update({
-      'fatigue': fatigue,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<void> updateDday(DateTime dday) async {
-    final uid = _auth.currentUser!.uid;
-    await _firestore.collection('users').doc(uid).update({
-      'dday': dday != null ? Timestamp.fromDate(dday) : null,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-
-
-  Future<void> logout() async {
-    await _auth.signOut();
-  }
-
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-
-  // 초대코드 생성
+  /// 랜덤 초대코드 생성
   String _generateInviteCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final rnd = Random.secure();
-    return List.generate(6, (_) => chars[rnd.nextInt(chars.length)]).join();
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random();
+    return List.generate(6, (index) => chars[rand.nextInt(chars.length)]).join();
   }
 }
-

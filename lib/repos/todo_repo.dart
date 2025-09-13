@@ -10,34 +10,26 @@ class TodoRepo {
     required DateTime end,
     required String assignedTo,
   }) async {
-    // ✅ todos 자동 생성
-    final todoRef = _db
-        .collection('users')
-        .doc(targetUid)
-        .collection('todos')
-        .doc(); // autoId
+    final userRef = _db.collection('users').doc(targetUid);
 
+    // ✅ todos 저장
+    final todoRef = userRef.collection('todos').doc(); // 자동 ID
     await todoRef.set({
       'title': title,
-      'assignedTo': assignedTo,
+      'done': false,
       'start': start,
       'end': end,
-      'done': false,
+      'assignedTo': assignedTo,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // ✅ events 자동 생성
-    final eventRef = _db
-        .collection('users')
-        .doc(targetUid)
-        .collection('events')
-        .doc();
-
+    // ✅ events 저장
+    final eventRef = userRef.collection('events').doc(); // 자동 ID
     await eventRef.set({
       'title': title,
-      'assignedTo': assignedTo,
       'start': start,
       'end': end,
+      'assignedTo': assignedTo,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }

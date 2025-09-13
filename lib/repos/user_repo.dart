@@ -3,11 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserRepo {
   final _db = FirebaseFirestore.instance;
 
-  Future<DocumentSnapshot<Map<String, dynamic>>> userDoc(String uid) async {
-    return await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+  Future<DocumentSnapshot> userDoc(String uid) async {
+    try {
+      return await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    } catch (e) {
+      print("❌ userDoc 읽기 실패: users/$uid → $e");
+      rethrow;
+    }
   }
 
 

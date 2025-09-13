@@ -65,16 +65,17 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
 
     final now = DateTime.now();
     final event = CalendarEvent(
-      id: 'todo-${now.millisecondsSinceEpoch}', // 고유 ID
+      id: 'todo-${now.millisecondsSinceEpoch}',
       title: todo['title'] ?? '제목 없음',
       content: todo['content'] ?? '사용자 추가 일정',
       location: '장소 없음',
       parent: '나',
       start: now,
-      end: now.add(const Duration(minutes: 30)), // 기본 30분짜리
-      icon: Icons.task_alt,
-      color: Colors.grey.shade200, // 또는 Palette.greyBackground
+      end: now.add(const Duration(minutes: 30)),
+      icon: 'task_alt', // 🔥 문자열로 저장
+      color: Colors.grey.shade200,
     );
+
 
   }
 

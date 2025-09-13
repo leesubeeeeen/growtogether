@@ -22,11 +22,12 @@
     void _signUp() async {
       setState(() => _loading = true);
       String? error = await _authService.signUp(
-        nameController.text.trim(),
-        emailController.text.trim(),
-        passwordController.text.trim(),
-        dday: _selectedDday, // ✅ DateTime
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+        dday: _selectedDday, // DateTime? 가능
       );
+
       setState(() => _loading = false);
 
       if (error != null) {

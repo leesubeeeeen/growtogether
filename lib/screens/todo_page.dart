@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/calendar_event.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import 'todo_ai_page.dart';
@@ -147,9 +148,10 @@ class TodoPage extends StatelessWidget {
             content: event.content,
             location: event.location,
             parent: event.parent,
-            icon: event.icon,
+            icon: CalendarEvent.getIconFromString(event.icon), // 🔑 변환해서 전달
             color: event.color,
           ),
+
         )),
 
         const SizedBox(height: 24),
