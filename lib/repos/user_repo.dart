@@ -3,10 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserRepo {
   final _db = FirebaseFirestore.instance;
 
-  Future<Map<String, dynamic>> userDoc(String uid) async {
-    final d = await _db.collection('users').doc(uid).get();
-    return d.data() ?? {};
+  Future<DocumentSnapshot<Map<String, dynamic>>> userDoc(String uid) async {
+    return await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
   }
+
 
   Future<Map<String, dynamic>> todayEmotion(String uid, DateTime day) async {
     final key = "${day.year.toString().padLeft(4, '0')}-"

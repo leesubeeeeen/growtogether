@@ -4,33 +4,41 @@ class TodoRepo {
   final _db = FirebaseFirestore.instance;
 
   Future<void> saveTodoAndEvent({
-    required String targetUid,   // 배정된 사용자 uid
+    required String targetUid,
     required String title,
     required DateTime start,
     required DateTime end,
-    required String assignedTo,  // "me" | "partner"
+    required String assignedTo,
   }) async {
-    final batch = _db.batch();
+    // ✅ todos 자동 생성
+    final todoRef = _db
+        .collection('users')
+        .doc(targetUid)
+        .collection('todos')
+        .doc(); // autoId
 
-    // todos
-    final todoRef = _db.collection('users/$targetUid/todos').doc();
-    batch.set(todoRef, {
+    await todoRef.set({
       'title': title,
-      'dueDate': Timestamp.fromDate(start),
       'assignedTo': assignedTo,
+      'start': start,
+      'end': end,
       'done': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // events
-    final eventRef = _db.collection('users/$targetUid/events').doc();
-    batch.set(eventRef, {
-      'title': title,
-      'start': Timestamp.fromDate(start),
-      'end': Timestamp.fromDate(end),
-      'assignedTo': assignedTo,
-    });
+    // ✅ events 자동 생성
+    final eventRef = _db
+        .collection('users')
+        .doc(targetUid)
+        .collection('events')
+        .doc();
 
-    await batch.commit();
+    await eventRef.set({
+      'title': title,
+      'assignedTo': assignedTo,
+      'start': start,
+      'end': end,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }

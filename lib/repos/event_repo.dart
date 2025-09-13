@@ -5,12 +5,26 @@ class EventRepo {
   final _db = FirebaseFirestore.instance;
 
   Future<List<CalendarEvent>> dayEvents(String uid, DateTime day) async {
-    final start = DateTime(day.year, day.month, day.day);
-    final end = start.add(const Duration(days: 1));
-    final qs = await _db.collection('users/$uid/events')
-        .where('start', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-        .where('start', isLessThan: Timestamp.fromDate(end))
+    final startOfDay = DateTime(day.year, day.month, day.day);
+    final endOfDay = startOfDay.add(Duration(days: 1));
+
+    final snapshot = await _db
+        .collection('users')
+        .doc(uid)
+        .collection('events')
+        .where('start', isGreaterThanOrEqualTo: startOfDay)
+        .where('start', isLessThan: endOfDay)
         .get();
-    return qs.docs.map(CalendarEvent.fromDoc).toList();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return CalendarEvent(
+        id: doc.id,
+        title: data['title'] ?? '',
+        start: (data['start'] as Timestamp).toDate(),
+        end: (data['end'] as Timestamp).toDate(),
+        assignedTo: data['assignedTo'] ?? 'me',
+      );
+    }).toList();
   }
 }

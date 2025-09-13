@@ -37,43 +37,59 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
     setState(() => _loading = true);
 
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final userRepo = UserRepo();
-    final eventRepo = EventRepo();
-    final configRepo = ConfigRepo();
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final userRepo = UserRepo();
+      final eventRepo = EventRepo();
+      final configRepo = ConfigRepo();
 
-    final userDoc = await userRepo.userDoc(uid);
-    final partnerUid = userDoc['partnerUid'];
-    final partnerDoc = await userRepo.userDoc(partnerUid);
+      final userDoc = await userRepo.userDoc(uid);
+      final userData = userDoc.data() as Map<String, dynamic>?;
+      final spouseUid = userData?['spouseUid'] as String?;
 
-    final today = DateTime.now();
+      final today = DateTime.now();
 
-    // 데이터 불러오기
-    final myEvents = await eventRepo.dayEvents(uid, today);
-    final partnerEvents = await eventRepo.dayEvents(partnerUid, today);
-    final myEmotion = await userRepo.todayEmotion(uid, today);
-    final partnerEmotion = await userRepo.todayEmotion(partnerUid, today);
-    final messages = await configRepo.loadMessagesKo();
-    final slots = await configRepo.loadDefaultSlots();
+      // 내 데이터
+      final myEvents = await eventRepo.dayEvents(uid, today);
+      final myEmotion = await userRepo.todayEmotion(uid, today);
 
-    // 규칙 엔진 실행
-    final engine = AssignmentEngine(
-      myEvents: myEvents,
-      partnerEvents: partnerEvents,
-      myFatigue: (myEmotion['fatigue'] ?? 0).toDouble(),
-      partnerFatigue: (partnerEmotion['fatigue'] ?? 0).toDouble(),
-      myFeeling: myEmotion['feeling'] ?? '😐',
-      partnerFeeling: partnerEmotion['feeling'] ?? '😐',
-      slots: slots,
-      messages: messages,
-    );
+      // 배우자 데이터 (없으면 기본값 사용)
+      List<CalendarEvent> partnerEvents = [];
+      Map<String, dynamic> partnerEmotion = {'fatigue': 0, 'feeling': '😐'};
 
-    final suggestion = engine.suggest(taskTitle, today);
+      if (spouseUid != null && spouseUid.isNotEmpty) {
+        final partnerDoc = await userRepo.userDoc(spouseUid);
+        if (partnerDoc.exists) {
+          partnerEvents = await eventRepo.dayEvents(spouseUid, today);
+          partnerEmotion = await userRepo.todayEmotion(spouseUid, today);
+        }
+      }
 
-    setState(() {
-      _suggestion = suggestion;
-      _loading = false;
-    });
+      final messages = await configRepo.loadMessagesKo();
+      final slots = await configRepo.loadDefaultSlots();
+
+      // 규칙 엔진 실행
+      final engine = AssignmentEngine(
+        myEvents: myEvents,
+        partnerEvents: partnerEvents,
+        myFatigue: (myEmotion['fatigue'] ?? 0).toDouble(),
+        partnerFatigue: (partnerEmotion['fatigue'] ?? 0).toDouble(),
+        myFeeling: myEmotion['feeling'] ?? '😐',
+        partnerFeeling: partnerEmotion['feeling'] ?? '😐',
+        slots: slots,
+        messages: messages,
+      );
+
+      final suggestion = engine.suggest(taskTitle, today);
+
+      setState(() {
+        _suggestion = suggestion;
+        _loading = false;
+      });
+    } catch (e, st) {
+      print("❌ 에러 발생: $e\n$st");
+      setState(() => _loading = false);
+    }
   }
 
   @override
@@ -234,12 +250,9 @@ class _TodoAiPageState extends State<TodoAiPage> {
                               size: 16, color: Palette.mainRed),
                           const SizedBox(width: 6),
                           Text(
-                            _suggestion!.assignedTo == 'me'
-                                ? "나"
-                                : "배우자",
+                            _suggestion!.assignedTo == 'me' ? "나" : "배우자",
                             style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w100),
+                                fontSize: 14, fontWeight: FontWeight.w100),
                           ),
                         ],
                       ),
@@ -264,10 +277,12 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     if (todoText.isNotEmpty) {
                       final uid = FirebaseAuth.instance.currentUser!.uid;
                       final userDoc = await UserRepo().userDoc(uid);
-                      final partnerUid = userDoc['partnerUid'];
+                      final userData =
+                      userDoc.data() as Map<String, dynamic>?;
+                      final spouseUid = userData?['spouseUid'] as String?;
                       final targetUid = _suggestion!.assignedTo == 'me'
                           ? uid
-                          : partnerUid;
+                          : (spouseUid ?? uid);
 
                       await TodoRepo().saveTodoAndEvent(
                         targetUid: targetUid,
@@ -314,27 +329,36 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       builder: (context) => AddScheduleBottomScreen(
                         title: '추천된 일정을 수정해서 추가해볼까요?',
                         initialTitle: todoText,
-                        initialStartTime: TimeOfDay.fromDateTime(_suggestion!.start),
-                        initialEndTime: TimeOfDay.fromDateTime(_suggestion!.end),
-                        initialDays: {DateFormat.E('ko_KR').format(_suggestion!.start)},
+                        initialStartTime:
+                        TimeOfDay.fromDateTime(_suggestion!.start),
+                        initialEndTime:
+                        TimeOfDay.fromDateTime(_suggestion!.end),
+                        initialDays: {
+                          DateFormat.E('ko_KR')
+                              .format(_suggestion!.start)
+                        },
                         onScheduleAdded: (updatedSchedule) async {
                           final uid = FirebaseAuth.instance.currentUser!.uid;
                           final userDoc = await UserRepo().userDoc(uid);
-                          final partnerUid = userDoc['partnerUid'];
+                          final userData =
+                          userDoc.data() as Map<String, dynamic>?;
+                          final spouseUid =
+                          userData?['spouseUid'] as String?;
                           final targetUid = _suggestion!.assignedTo == 'me'
                               ? uid
-                              : partnerUid;
+                              : (spouseUid ?? uid);
 
                           await TodoRepo().saveTodoAndEvent(
                             targetUid: targetUid,
-                            title: updatedSchedule['title'], // 오타 수정
+                            title: updatedSchedule['title'],
                             start: _suggestion!.start,
                             end: _suggestion!.end,
                             assignedTo: _suggestion!.assignedTo,
                           );
 
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('일정을 수정해서 추가했어요!')),
+                            const SnackBar(
+                                content: Text('일정을 수정해서 추가했어요!')),
                           );
                           _controller.clear();
                           setState(() => _suggestion = null);
