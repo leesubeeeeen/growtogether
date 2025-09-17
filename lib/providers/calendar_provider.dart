@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:growtogether/models/calendar_event.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CalendarProvider with ChangeNotifier {
   final List<CalendarEvent> _events = [];
-
-  // ✅ 선택된 날짜 추가
   DateTime _selectedDate = DateTime.now();
+
+  List<CalendarEvent> get events => List.unmodifiable(_events);
   DateTime get selectedDate => _selectedDate;
 
   void selectDate(DateTime newDate) {
-    _selectedDate = DateTime(newDate.year, newDate.month, newDate.day); // 시간 제거
+    _selectedDate = DateTime(newDate.year, newDate.month, newDate.day);
     notifyListeners();
   }
 
-  List<CalendarEvent> get events => List.unmodifiable(_events);
-
   void addEvent(CalendarEvent event) {
     _events.add(event);
-    _events.sort((a, b) => a.start.compareTo(b.start)); // 시간순 정렬
+    _events.sort((a, b) => a.start.compareTo(b.start));
     notifyListeners();
   }
 
@@ -30,7 +30,22 @@ class CalendarProvider with ChangeNotifier {
     return _events.where((e) =>
     e.start.year == day.year &&
         e.start.month == day.month &&
-        e.start.day == day.day
-    ).toList();
+        e.start.day == day.day).toList();
+  }
+
+  // 🔑 Firestore에서 events 불러오기
+  Future<void> loadEventsFromFirestore(String uid) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('events')
+        .orderBy('start')
+        .get();
+
+    _events.clear();
+    for (var doc in snapshot.docs) {
+      _events.add(CalendarEvent.fromFirestore(doc));
+    }
+    notifyListeners();
   }
 }

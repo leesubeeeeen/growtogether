@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TodoProvider with ChangeNotifier {
   final List<Map<String, dynamic>> _todos = [];
-
-  // ✅ 선택된 날짜 추가
   DateTime _selectedDate = DateTime.now();
 
   List<Map<String, dynamic>> get todos => List.unmodifiable(_todos);
-
-  // ✅ 선택된 날짜 getter
   DateTime get selectedDate => _selectedDate;
 
-  // ✅ 선택된 날짜 setter
   void selectDate(DateTime date) {
     _selectedDate = date;
     notifyListeners();
@@ -19,6 +15,11 @@ class TodoProvider with ChangeNotifier {
 
   void addTodo(Map<String, dynamic> todo) {
     _todos.add(todo);
+    notifyListeners();
+  }
+
+  void clearTodos() {
+    _todos.clear();
     notifyListeners();
   }
 
@@ -32,8 +33,25 @@ class TodoProvider with ChangeNotifier {
     }).toList();
   }
 
-  void clearTodos() {
+  // 🔑 Firestore에서 todos 불러오기
+  Future<void> loadTodosFromFirestore(String uid) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('todos')
+        .orderBy('start')
+        .get();
+
     _todos.clear();
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      _todos.add({
+        'title': data['title'] ?? '',
+        'time': (data['start'] as Timestamp).toDate(),
+        'done': data['done'] ?? false,
+        'date': (data['start'] as Timestamp).toDate(),
+      });
+    }
     notifyListeners();
   }
 }
