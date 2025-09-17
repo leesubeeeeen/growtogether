@@ -10,8 +10,16 @@ class AuthService {
     return _auth.currentUser?.uid;
   }
 
-  /// 🔑 회원가입
-  /// 성공 시 null, 실패 시 에러 메시지(String) 반환
+  // ---------- utils ----------
+  String _generateInviteCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random.secure();
+    return List.generate(6, (_) => chars[rand.nextInt(chars.length)]).join();
+  }
+  String _sanitizeCode(String raw) => raw.trim().toUpperCase();
+
+  // ---------- sign up ----------
+  // 성공: null, 실패: 에러 메시지
   Future<String?> signUp({
     required String name,
     required String email,
@@ -19,105 +27,107 @@ class AuthService {
     DateTime? dday,
   }) async {
     try {
-      // Firebase Auth 계정 생성
       final cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
       final uid = cred.user!.uid;
 
-      // Firestore users/{uid} 문서 생성
+      final code = _generateInviteCode();
+
+      // users/{uid}
       await _db.collection('users').doc(uid).set({
         'name': name,
         'email': email,
-        'dday': dday != null ? Timestamp.fromDate(dday) : null,  // ✅ 이렇게 저장
+        if (dday != null) 'dday': Timestamp.fromDate(dday),
         'spouseUid': null,
         'fatigue': 0,
-        'inviteCode': _generateInviteCode(),
+        'inviteCode': code,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      return null; // 성공 시 null 반환
+      // codes/{code} -> { uid }
+      await _db.collection('codes').doc(code).set({'uid': uid});
+
+      return null;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        return '이미 사용 중인 이메일입니다.';
-      } else if (e.code == 'invalid-email') {
-        return '유효하지 않은 이메일 형식입니다.';
-      } else if (e.code == 'weak-password') {
-        return '비밀번호가 너무 약합니다.';
-      } else {
-        return '회원가입 실패: ${e.message}';
-      }
+      if (e.code == 'email-already-in-use') return '이미 사용 중인 이메일입니다.';
+      if (e.code == 'invalid-email') return '유효하지 않은 이메일 형식입니다.';
+      if (e.code == 'weak-password') return '비밀번호가 너무 약합니다.';
+      return '회원가입 실패: ${e.message}';
     } catch (e) {
       return '알 수 없는 오류가 발생했습니다: $e';
     }
 
   }
 
-
-
-  /// 🔑 로그인
+  // ---------- login ----------
   Future<String?> login(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       return null;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return '해당 이메일의 사용자가 존재하지 않습니다.';
-      } else if (e.code == 'wrong-password') {
-        return '비밀번호가 올바르지 않습니다.';
-      } else {
-        return '로그인 실패: ${e.message}';
-      }
-    } catch (e) {
+      if (e.code == 'user-not-found') return '해당 이메일의 사용자가 존재하지 않습니다.';
+      if (e.code == 'wrong-password') return '비밀번호가 올바르지 않습니다.';
+      return '로그인 실패: ${e.message}';
+    } catch (_) {
       return '알 수 없는 오류가 발생했습니다.';
     }
   }
 
-  /// 🔗 초대코드로 배우자 연결
+  // ---------- link spouse by invite code ----------
+  // 성공: null, 실패: 에러 메시지
   Future<String?> linkSpouseByInviteCode(String inviteCode) async {
     try {
-      final currentUid = _auth.currentUser?.uid;
-      if (currentUid == null) return "로그인이 필요합니다.";
+      final me = _auth.currentUser;
+      if (me == null) return '로그인이 필요합니다.';
+      final myUid = me.uid;
 
-      final query = await _db
-          .collection('users')
-          .where('inviteCode', isEqualTo: inviteCode)
-          .limit(1)
-          .get();
+      final code = _sanitizeCode(inviteCode);
 
-      if (query.docs.isEmpty) {
-        return "해당 초대코드를 가진 사용자가 없습니다.";
-      }
+      // 1) codes/{code} 에서 partnerUid 조회
+      final snap = await _db.collection('codes').doc(code).get();
+      if (!snap.exists) return '해당 초대코드를 가진 사용자가 없습니다.';
 
-      final partnerDoc = query.docs.first;
-      final partnerUid = partnerDoc.id;
+      final partnerUid = (snap.data()!['uid'] as String);
+      if (partnerUid == myUid) return '본인 초대코드는 사용할 수 없습니다.';
 
-      if (partnerUid == currentUid) {
-        return "본인 초대코드는 사용할 수 없습니다.";
-      }
-
-      final batch = _db.batch();
-      final myRef = _db.collection('users').doc(currentUid);
+      final myRef = _db.collection('users').doc(myUid);
       final partnerRef = _db.collection('users').doc(partnerUid);
 
-      batch.update(myRef, {'spouseUid': partnerUid});
-      batch.update(partnerRef, {'spouseUid': currentUid});
+      // 2) 규칙 요구: partner 문서에 spouseUid 최초 설정 + inviteCodeAttempt 포함
+      final batch = _db.batch();
+      batch.update(partnerRef, {
+        'spouseUid': myUid,
+        'inviteCodeAttempt': code,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      // 3) 내 문서는 내가 쓰기 가능
+      batch.update(myRef, {
+        'spouseUid': partnerUid,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       await batch.commit();
       return null;
+    } on FirebaseException catch (e) {
+      return '연결 실패(${e.code})';
     } catch (e) {
-      print("❌ 배우자 연결 에러: $e");
-      return "알 수 없는 오류가 발생했습니다.";
+      return '알 수 없는 오류가 발생했습니다: $e';
     }
   }
 
-  /// 랜덤 초대코드 생성
-  String _generateInviteCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final rand = Random();
-    return List.generate(6, (index) => chars[rand.nextInt(chars.length)]).join();
+  // ---------- (옵션) 기존 유저 백필 ----------
+  Future<void> backfillCodesOnce() async {
+    final qs = await _db.collection('users').get();
+    final batch = _db.batch();
+    for (final d in qs.docs) {
+      final code = (d.data()['inviteCode'] as String?)?.trim();
+      if (code != null && code.isNotEmpty) {
+        batch.set(_db.collection('codes').doc(code.toUpperCase()), {'uid': d.id});
+      }
+    }
+    await batch.commit();
   }
 }
