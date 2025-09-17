@@ -5,6 +5,10 @@ import 'dart:math';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  /// 현재 로그인한 유저 UID 가져오기
+  String? get currentUserUid {
+    return _auth.currentUser?.uid;
+  }
 
   /// 🔑 회원가입
   /// 성공 시 null, 실패 시 에러 메시지(String) 반환
@@ -49,6 +53,7 @@ class AuthService {
     } catch (e) {
       return '알 수 없는 오류가 발생했습니다: $e';
     }
+
   }
 
 

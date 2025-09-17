@@ -9,17 +9,12 @@ class TodoProvider with ChangeNotifier {
   DateTime get selectedDate => _selectedDate;
 
   void selectDate(DateTime date) {
-    _selectedDate = date;
+    _selectedDate = DateTime(date.year, date.month, date.day);
     notifyListeners();
   }
 
   void addTodo(Map<String, dynamic> todo) {
     _todos.add(todo);
-    notifyListeners();
-  }
-
-  void clearTodos() {
-    _todos.clear();
     notifyListeners();
   }
 
@@ -33,13 +28,17 @@ class TodoProvider with ChangeNotifier {
     }).toList();
   }
 
-  // 🔑 Firestore에서 todos 불러오기
+  void clearTodos() {
+    _todos.clear();
+    notifyListeners();
+  }
+
+  /// ✅ Firestore → Provider
   Future<void> loadTodosFromFirestore(String uid) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('todos')
-        .orderBy('start')
         .get();
 
     _todos.clear();
@@ -47,9 +46,13 @@ class TodoProvider with ChangeNotifier {
       final data = doc.data();
       _todos.add({
         'title': data['title'] ?? '',
-        'time': (data['start'] as Timestamp).toDate(),
         'done': data['done'] ?? false,
-        'date': (data['start'] as Timestamp).toDate(),
+        'time': data['start'] != null
+            ? (data['start'] as Timestamp).toDate()
+            : null,
+        'date': data['start'] != null
+            ? (data['start'] as Timestamp).toDate()
+            : null,
       });
     }
     notifyListeners();

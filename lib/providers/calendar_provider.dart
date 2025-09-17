@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:growtogether/models/calendar_event.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/calendar_event.dart';
 
 class CalendarProvider with ChangeNotifier {
   final List<CalendarEvent> _events = [];
   DateTime _selectedDate = DateTime.now();
 
-  List<CalendarEvent> get events => List.unmodifiable(_events);
   DateTime get selectedDate => _selectedDate;
+  List<CalendarEvent> get events => List.unmodifiable(_events);
 
   void selectDate(DateTime newDate) {
     _selectedDate = DateTime(newDate.year, newDate.month, newDate.day);
@@ -33,13 +32,12 @@ class CalendarProvider with ChangeNotifier {
         e.start.day == day.day).toList();
   }
 
-  // 🔑 Firestore에서 events 불러오기
+  /// ✅ Firestore → Provider
   Future<void> loadEventsFromFirestore(String uid) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('events')
-        .orderBy('start')
         .get();
 
     _events.clear();
