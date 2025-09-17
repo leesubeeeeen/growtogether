@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CalendarEvent {
-  final String id;
+  final String? id;
   final String title;
   final String content;
   final String location;
@@ -13,7 +13,7 @@ class CalendarEvent {
   final DateTime end;
 
   CalendarEvent({
-    required this.id,
+    this.id,          // ← required 제거
     required this.title,
     required this.content,
     required this.location,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import 'add_schedule_bottom_screen.dart';
 import '../theme/palette.dart';
@@ -14,6 +15,9 @@ import '../repos/user_repo.dart';
 import '../repos/event_repo.dart';
 import '../repos/config_repo.dart';
 import '../repos/todo_repo.dart';
+
+import '../providers/calendar_provider.dart';
+import '../providers/todo_provider.dart';
 
 class TodoAiPage extends StatefulWidget {
   const TodoAiPage({super.key});
@@ -45,7 +49,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
       final today = DateTime.now();
 
-      // ✅ AI 추천을 위한 데이터만 읽기
+      // ✅ AI 추천에 필요한 데이터 수집
       final myEvents = await eventRepo.dayEvents(uid, today);
       final myEmotion = await userRepo.todayEmotion(uid, today);
 
@@ -76,7 +80,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
       final suggestion = engine.suggest(taskTitle, today);
 
-      // ✅ suggestion 없으면 return
       if (suggestion == null) {
         setState(() => _loading = false);
         return;
@@ -91,7 +94,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
       setState(() => _loading = false);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +197,8 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                // ✅ 추천 박스
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -257,34 +261,25 @@ class _TodoAiPageState extends State<TodoAiPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: const [
-                          Icon(Icons.sync, size: 16, color: Palette.mainRed),
-                          SizedBox(width: 6),
-                          Text('반복 없음',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w100)),
-                        ],
-                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // ✅ 이렇게 할래요 버튼
                 ElevatedButton(
                   onPressed: () async {
                     final todoText = _controller.text.trim();
                     if (todoText.isNotEmpty) {
                       final uid = FirebaseAuth.instance.currentUser!.uid;
                       final userDoc = await UserRepo().userDoc(uid);
-                      final userData =
-                      userDoc.data() as Map<String, dynamic>?;
+                      final userData = userDoc.data() as Map<String, dynamic>?;
                       final spouseUid = userData?['spouseUid'] as String?;
                       final targetUid = _suggestion!.assignedTo == 'me'
                           ? uid
                           : (spouseUid ?? uid);
 
+                      // 1. Firestore 저장
                       await TodoRepo().saveTodoAndEvent(
                         targetUid: targetUid,
                         title: todoText,
@@ -293,11 +288,35 @@ class _TodoAiPageState extends State<TodoAiPage> {
                         assignedTo: _suggestion!.assignedTo,
                       );
 
+                      // 2. 로컬 Provider 업데이트
+                      final newEvent = CalendarEvent(
+                        id: null,
+                        title: todoText,
+                        content: _suggestion!.message,
+                        location: '',
+                        parent: _suggestion!.assignedTo == 'me' ? "나" : "배우자",
+                        start: _suggestion!.start,
+                        end: _suggestion!.end,
+                        icon: 'event',
+                        color: Palette.lightRed,
+                      );
+                      context.read<CalendarProvider>().addEvent(newEvent);
+
+                      context.read<TodoProvider>().addTodo({
+                        'title': todoText,
+                        'time': DateFormat.Hm().format(_suggestion!.start),
+                        'done': false,
+                        'date': _suggestion!.start,
+                      });
+
                       _controller.clear();
                       setState(() => _suggestion = null);
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('할 일이 추가되었어요!')),
                       );
+
+                      Navigator.pop(context);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -316,7 +335,10 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
+// ✅ 조금 수정할게요 버튼
                 ElevatedButton(
                   onPressed: () {
                     final todoText = _controller.text.trim();
@@ -324,27 +346,21 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                       ),
                       builder: (context) => AddScheduleBottomScreen(
                         title: '추천된 일정을 수정해서 추가해볼까요?',
                         initialTitle: todoText,
-                        initialStartTime:
-                        TimeOfDay.fromDateTime(_suggestion!.start),
-                        initialEndTime:
-                        TimeOfDay.fromDateTime(_suggestion!.end),
+                        initialStartTime: TimeOfDay.fromDateTime(_suggestion!.start),
+                        initialEndTime: TimeOfDay.fromDateTime(_suggestion!.end),
                         initialDays: {
-                          DateFormat.E('ko_KR')
-                              .format(_suggestion!.start)
+                          DateFormat.E('ko_KR').format(_suggestion!.start)
                         },
                         onScheduleAdded: (updatedSchedule) async {
                           final uid = FirebaseAuth.instance.currentUser!.uid;
                           final userDoc = await UserRepo().userDoc(uid);
-                          final userData =
-                          userDoc.data() as Map<String, dynamic>?;
-                          final spouseUid =
-                          userData?['spouseUid'] as String?;
+                          final userData = userDoc.data() as Map<String, dynamic>?;
+                          final spouseUid = userData?['spouseUid'] as String?;
                           final targetUid = _suggestion!.assignedTo == 'me'
                               ? uid
                               : (spouseUid ?? uid);
@@ -357,9 +373,29 @@ class _TodoAiPageState extends State<TodoAiPage> {
                             assignedTo: _suggestion!.assignedTo,
                           );
 
+                          // 로컬 Provider도 업데이트
+                          final newEvent = CalendarEvent(
+                            id: null,
+                            title: updatedSchedule['title'],
+                            content: _suggestion!.message,
+                            location: '',
+                            parent: _suggestion!.assignedTo == 'me' ? "나" : "배우자",
+                            start: _suggestion!.start,
+                            end: _suggestion!.end,
+                            icon: 'event',
+                            color: Palette.lightRed,
+                          );
+                          context.read<CalendarProvider>().addEvent(newEvent);
+
+                          context.read<TodoProvider>().addTodo({
+                            'title': updatedSchedule['title'],
+                            'time': DateFormat.Hm().format(_suggestion!.start),
+                            'done': false,
+                            'date': _suggestion!.start,
+                          });
+
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('일정을 수정해서 추가했어요!')),
+                            const SnackBar(content: Text('일정을 수정해서 추가했어요!')),
                           );
                           _controller.clear();
                           setState(() => _suggestion = null);
@@ -384,7 +420,10 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
+// ✅ 제가 직접할래요 버튼
                 ElevatedButton(
                   onPressed: () {
                     _controller.clear();
@@ -406,6 +445,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                   ),
                 ),
+
               ],
             ],
           ),

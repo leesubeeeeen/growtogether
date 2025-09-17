@@ -1,9 +1,11 @@
 class Suggestion {
-  final String assignedTo; // "me" | "partner"
+  final String assignedTo;
   final DateTime start;
   final DateTime end;
-  final String slotLabel;  // "오전/오후/저녁"
-  final String message;    // 카드에 표시할 멘트
+  final String slotLabel;
+  final String message;
+  final String? location; // ⬅️ 새로 추가(확장)
+  final String? icon;     // ⬅️ 새로 추가(확장)
 
   const Suggestion({
     required this.assignedTo,
@@ -11,5 +13,7 @@ class Suggestion {
     required this.end,
     required this.slotLabel,
     required this.message,
+    this.location,
+    this.icon,
   });
 }
