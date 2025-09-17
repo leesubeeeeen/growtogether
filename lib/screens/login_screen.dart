@@ -1,8 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 //import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/todo_provider.dart';
+import '../providers/calendar_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService(); // ✅ 인스턴스 생성
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+
   bool _obscurePassword = true;
   bool _loading = false;
 
@@ -23,11 +29,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
 
     final email = emailController.text.trim();
-    final password = passwordController.text; // ← 비밀번호는 trim() 제거
+    final password = passwordController.text;
 
     String? error;
     try {
-      // AuthService.login이 성공 시 null, 실패 시 에러 메시지(String) 반환한다고 가정
       error = await _authService.login(email, password);
     } catch (e) {
       error = '알 수 없는 오류가 발생했습니다.';
@@ -41,12 +46,18 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('로그인 실패: $error')),
       );
-      return; // ← 실패 시 여기서 종료! 네비게이션 금지
+      return;
     }
 
-    // 성공 시에만 이동
+    // ✅ 로그인 성공: Firestore 데이터 불러오기
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    await context.read<TodoProvider>().loadTodosFromFirestore(uid);
+    await context.read<CalendarProvider>().loadEventsFromFirestore(uid);
+
+    // 홈으로 이동
     Navigator.pushReplacementNamed(context, '/home');
   }
+
 
 
   @override
