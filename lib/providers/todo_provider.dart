@@ -8,7 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// - API:
 ///   - selectDate(DateTime)
 ///   - loadTodosFromFirestore(String uid) / refreshForUser(String uid)
-///   - addTodo({id,title,date,done,assignedTo})
+///   - addTodo({id,title,date,done,assignedToUid})
 ///   - getTodosForSelectedDay()
 class TodoProvider with ChangeNotifier {
   final List<Map<String, dynamic>> _todos = [];
@@ -29,7 +29,7 @@ class TodoProvider with ChangeNotifier {
     required String title,
     required DateTime date,
     required bool done,
-    String assignedTo = 'me', // 'me' | 'partner'
+    required String assignedToUid, // 🔹 UID로 저장
   }) {
     _todos.add({
       'id': id,
@@ -37,7 +37,7 @@ class TodoProvider with ChangeNotifier {
       'date': date,       // DateTime
       'time': date,       // 호환 필드 (UI에서 사용하던 키)
       'done': done,
-      'assignedTo': assignedTo,
+      'assignedTo': assignedToUid, // 🔹 UID
     });
     _todos.sort((a, b) {
       final ad = a['date'] as DateTime?;
@@ -95,7 +95,7 @@ class TodoProvider with ChangeNotifier {
           'id': doc.id,
           'title': data['title'] ?? '',
           'done': (data['done'] ?? false) as bool,
-          'assignedTo': (data['assignedTo'] ?? 'me') as String,
+          'assignedTo': data['assignedTo'] as String? ?? '', // 🔹 UID
           'date': start, // 주 필드
           'time': start, // 호환 필드
         };

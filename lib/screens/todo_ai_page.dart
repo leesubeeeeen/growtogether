@@ -159,7 +159,9 @@ class _TodoAiPageState extends State<TodoAiPage> {
         title: title,
         date: start,
         done: false,
+        assignedToUid: assignedTo, // 🔹 UID 그대로 넣기
       );
+
 
       // 서버 권위로 동기화
       await context.read<TodoProvider>().refreshForUser(uid);

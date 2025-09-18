@@ -1,4 +1,3 @@
-// file: lib/repos/todo_repo.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -31,26 +30,28 @@ class TodoRepo {
     }
 
     final ownerUid = user.uid;
-    final targetUid =
+
+    // 🔹 me/partner → UID 변환
+    final assignedToUid =
     (assignedTo == 'partner' && spouseUid != null && spouseUid.isNotEmpty)
         ? spouseUid
         : ownerUid;
 
     if (kDebugMode) {
-      debugPrint('[TodoRepo.saveTodo] owner=$ownerUid, target=$targetUid, '
+      debugPrint('[TodoRepo.saveTodo] owner=$ownerUid, assignedToUid=$assignedToUid, '
           'assignedTo=$assignedTo, title="$title", start=$start, end=$end, '
           'createEvent=$createEvent');
     }
 
     try {
-      final userDocRef = _db.collection('users').doc(targetUid);
+      final userDocRef = _db.collection('users').doc(assignedToUid);
 
       // 1) todos 저장
       final todosRef = userDocRef.collection('todos');
       final todoDocRef = await todosRef.add({
         'title': title,
         'done': false,
-        'assignedTo': assignedTo, // 표시용
+        'assignedTo': assignedToUid, // 🔹 UID 저장
         'start': Timestamp.fromDate(start),
         'end': Timestamp.fromDate(end),
         'ownerUid': ownerUid, // 누가 생성했는지 추적
@@ -58,14 +59,14 @@ class TodoRepo {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // 2) 옵션: events 저장 (캘린더 화면에서 쓰고 싶을 때만)
+      // 2) 옵션: events 저장
       if (createEvent) {
         final eventsRef = userDocRef.collection('events');
         await eventsRef.add({
           'title': title,
-          'content': eventContent ?? ((assignedTo == 'me') ? '내 일정' : '배우자 일정'),
+          'content': eventContent ?? '일정',
           'location': eventLocation ?? '',
-          'parent': (assignedTo == 'me') ? '나' : '배우자',
+          'parent': assignedToUid, // 🔹 UID 저장
           'start': Timestamp.fromDate(start),
           'end': Timestamp.fromDate(end),
           'icon': 'event',

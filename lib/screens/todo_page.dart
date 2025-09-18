@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
@@ -35,7 +36,7 @@ class _TodoPageState extends State<TodoPage> {
     // 최초 로딩
     await context.read<TodoProvider>().loadTodosFromFirestore(uid);
 
-    // 날짜 동기화(화면 주간바, 투두 둘 다 동일 날짜)
+    // 날짜 동기화
     final today = DateTime.now();
     context.read<CalendarProvider>().selectDate(today);
     context.read<TodoProvider>().selectDate(today);
@@ -103,7 +104,7 @@ class _TodoPageState extends State<TodoPage> {
                   context,
                   MaterialPageRoute(builder: (context) => const TodoAiPage()),
                 );
-                // 돌아왔을 때 새로고침 (서버 권위)
+                // 돌아왔을 때 새로고침
                 final uid = FirebaseAuth.instance.currentUser?.uid;
                 if (uid != null && mounted) {
                   await context.read<TodoProvider>().refreshForUser(uid);
@@ -114,7 +115,8 @@ class _TodoPageState extends State<TodoPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: Text(
                 '+ 계획 추가',
@@ -173,7 +175,7 @@ class _TodoPageState extends State<TodoPage> {
     );
   }
 
-  /// 투두 리스트 (당일만, 시간 오름차순, 맨 위 한 항목만 빨간 타이틀)
+  /// 투두 리스트
   Widget _buildTodoList(BuildContext context) {
     final todos = context.watch<TodoProvider>().getTodosForSelectedDay();
 
@@ -186,32 +188,61 @@ class _TodoPageState extends State<TodoPage> {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: todos.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final todo = todos[index];
-        final DateTime? dt = todo['date'] as DateTime?;
-        final timeStr =
-        (dt != null) ? DateFormat.Hm().format(dt) : '시간 미정';
+    return FutureBuilder<Map<String, String>>(
+      future: _loadUserNames(todos), // 🔹 UID → name 변환
+      builder: (context, snapshot) {
+        final nameMap = snapshot.data ?? {};
 
-        final bool isTop = index == 0; // 맨 위 항목만 빨간색
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          itemCount: todos.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final todo = todos[index];
+            final DateTime? dt = todo['date'] as DateTime?;
+            final timeStr =
+            (dt != null) ? DateFormat.Hm().format(dt) : '시간 미정';
 
-        return _TodoTile(
-          time: timeStr,
-          title: (todo['title'] ?? '제목 없음') as String,
-          content: (todo['assignedTo'] == 'partner') ? '배우자에게 배정됨' : '내 할 일',
-          location: '장소 없음',
-          parent: (todo['assignedTo'] == 'partner') ? '배우자' : '나',
-          highlightTitle: isTop,
+            final bool isTop = index == 0;
+
+            final assignedUid = todo['assignedTo'] as String?;
+            final assignedName = nameMap[assignedUid] ?? '알 수 없음';
+
+            return _TodoTile(
+              time: timeStr,
+              title: todo['title'] ?? '제목 없음',
+              content: '$assignedName에게 배정됨',
+              location: '장소 없음',
+              parent: assignedName,
+              highlightTitle: isTop,
+            );
+          },
         );
       },
     );
   }
+
+  /// UID → name 변환
+  Future<Map<String, String>> _loadUserNames(
+      List<Map<String, dynamic>> todos) async {
+    final db = FirebaseFirestore.instance;
+    final uids = todos
+        .map((t) => t['assignedTo'] as String?)
+        .whereType<String>()
+        .toSet();
+
+    final result = <String, String>{};
+    for (final uid in uids) {
+      final doc = await db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        result[uid] = doc['name'] as String? ?? '알 수 없음';
+      }
+    }
+    return result;
+  }
 }
 
-/// 내부 전용 타일 (ScheduleItem을 건드리지 않고 요구사항을 만족시키기 위함)
+/// 내부 전용 타일
 class _TodoTile extends StatelessWidget {
   final String time, title, content, location, parent;
   final bool highlightTitle;
@@ -256,7 +287,8 @@ class _TodoTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.task_alt, size: 20, color: Palette.greyText),
+                    const Icon(Icons.task_alt,
+                        size: 20, color: Palette.greyText),
                     const SizedBox(width: 8),
                     Text(
                       title,
@@ -264,7 +296,8 @@ class _TodoTile extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         fontFamily: AppFonts.primaryFont,
-                        color: highlightTitle ? Palette.mainRed : Palette.greyText,
+                        color:
+                        highlightTitle ? Palette.mainRed : Palette.greyText,
                       ),
                     ),
                   ],
@@ -293,7 +326,8 @@ class _TodoTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(Icons.person, size: 14, color: Palette.greyText),
+                    const Icon(Icons.person,
+                        size: 14, color: Palette.greyText),
                     const SizedBox(width: 4),
                     Text(
                       parent,
