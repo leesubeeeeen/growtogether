@@ -6,11 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../widgets/calendar_day_item.dart';
-import '../widgets/schedule_item.dart';
 import '../widgets/bottom_navi_bar.dart';
 import '../providers/todo_provider.dart';
 import '../providers/calendar_provider.dart';
-import '../models/calendar_event.dart';
 import 'todo_ai_page.dart';
 
 class TodoPage extends StatefulWidget {
@@ -26,13 +24,22 @@ class _TodoPageState extends State<TodoPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _bootstrap();
   }
 
-  Future<void> _loadUserData() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+  Future<void> _bootstrap() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
+
+    // 최초 로딩
     await context.read<TodoProvider>().loadTodosFromFirestore(uid);
-    await context.read<CalendarProvider>().loadEventsFromFirestore(uid);
+
+    // 날짜 동기화(화면 주간바, 투두 둘 다 동일 날짜)
+    final today = DateTime.now();
+    context.read<CalendarProvider>().selectDate(today);
+    context.read<TodoProvider>().selectDate(today);
+    setState(() => _focusedDay = today);
   }
 
   @override
@@ -91,11 +98,16 @@ class _TodoPageState extends State<TodoPage> {
           Padding(
             padding: const EdgeInsets.only(top: 24.0, right: 16.0),
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const TodoAiPage()),
                 );
+                // 돌아왔을 때 새로고침 (서버 권위)
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid != null && mounted) {
+                  await context.read<TodoProvider>().refreshForUser(uid);
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Palette.buttonBg,
@@ -121,13 +133,14 @@ class _TodoPageState extends State<TodoPage> {
         children: [
           _buildCalendarBar(context),
           const SizedBox(height: 12),
-          Expanded(child: _buildScheduleList(context)),
+          Expanded(child: _buildTodoList(context)),
         ],
       ),
       bottomNavigationBar: buildBottomNavBar(context, 1),
     );
   }
 
+  /// 상단 주간 캘린더 바
   Widget _buildCalendarBar(BuildContext context) {
     final calendar = context.watch<CalendarProvider>();
     final selectedDate = calendar.selectedDate;
@@ -160,62 +173,142 @@ class _TodoPageState extends State<TodoPage> {
     );
   }
 
-  Widget _buildScheduleList(BuildContext context) {
-    final calendar = context.watch<CalendarProvider>();
+  /// 투두 리스트 (당일만, 시간 오름차순, 맨 위 한 항목만 빨간 타이틀)
+  Widget _buildTodoList(BuildContext context) {
     final todos = context.watch<TodoProvider>().getTodosForSelectedDay();
-    final selectedDate = calendar.selectedDate;
-    final events = calendar.getEventsForDay(selectedDate);
 
-    String _formatTimeRange(DateTime start, DateTime end) {
-      String h(DateTime t) =>
-          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-      return '${h(start)} - ${h(end)}';
+    if (todos.isEmpty) {
+      return const Center(
+        child: Text(
+          '오늘은 등록된 할 일이 없어요.',
+          style: TextStyle(color: Palette.greyText),
+        ),
+      );
     }
 
-    return ListView(
+    return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 24),
+      itemCount: todos.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final todo = todos[index];
+        final DateTime? dt = todo['date'] as DateTime?;
+        final timeStr =
+        (dt != null) ? DateFormat.Hm().format(dt) : '시간 미정';
+
+        final bool isTop = index == 0; // 맨 위 항목만 빨간색
+
+        return _TodoTile(
+          time: timeStr,
+          title: (todo['title'] ?? '제목 없음') as String,
+          content: (todo['assignedTo'] == 'partner') ? '배우자에게 배정됨' : '내 할 일',
+          location: '장소 없음',
+          parent: (todo['assignedTo'] == 'partner') ? '배우자' : '나',
+          highlightTitle: isTop,
+        );
+      },
+    );
+  }
+}
+
+/// 내부 전용 타일 (ScheduleItem을 건드리지 않고 요구사항을 만족시키기 위함)
+class _TodoTile extends StatelessWidget {
+  final String time, title, content, location, parent;
+  final bool highlightTitle;
+
+  const _TodoTile({
+    required this.time,
+    required this.title,
+    required this.content,
+    required this.location,
+    required this.parent,
+    required this.highlightTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 📅 CalendarProvider에서 불러온 일정들
-        ...events.map((event) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: ScheduleItem(
-            time: _formatTimeRange(event.start, event.end),
-            title: event.title,
-            content: event.content,
-            location: event.location,
-            parent: event.parent,
-            icon: CalendarEvent.getIconFromString(event.icon),
-            color: event.color,
-          ),
-        )),
-
-        const SizedBox(height: 24),
-
-        if (todos.isNotEmpty)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text(
-              '내가 추가한 할 일',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Palette.black,
-              ),
+        // 왼쪽 시간
+        SizedBox(
+          width: 64,
+          child: Text(
+            time,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w300,
+              fontFamily: AppFonts.primaryFont,
+              color: Palette.greyText,
             ),
           ),
-
-        ...todos.map((todo) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: ScheduleItem(
-            time: DateFormat.Hm().format(todo['date']),
-            title: todo['title'] ?? '제목 없음',
-            content: '사용자가 직접 추가한 일정',
-            location: '장소 없음',
-            parent: '나',
-            icon: Icons.task_alt,
-            color: Palette.greyBackground,
+        ),
+        // 본문 카드
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Palette.greyBackground,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.task_alt, size: 20, color: Palette.greyText),
+                    const SizedBox(width: 8),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: AppFonts.primaryFont,
+                        color: highlightTitle ? Palette.mainRed : Palette.greyText,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  content,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontFamily: AppFonts.primaryFont,
+                    color: Palette.black,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.place_outlined,
+                        size: 14, color: Palette.greyText),
+                    const SizedBox(width: 4),
+                    Text(
+                      location,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Palette.greyText,
+                        fontFamily: AppFonts.primaryFont,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.person, size: 14, color: Palette.greyText),
+                    const SizedBox(width: 4),
+                    Text(
+                      parent,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Palette.greyText,
+                        fontFamily: AppFonts.primaryFont,
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }
