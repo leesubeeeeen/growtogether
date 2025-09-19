@@ -22,15 +22,13 @@ class TodoProvider with ChangeNotifier {
   /// uid → name 변환
   Future<String> _resolveUserName(String uid) async {
     try {
-      final doc =
-      await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (!doc.exists) return '알 수 없음';
-      final data = doc.data();
-      return (data?['name'] ?? '알 수 없음') as String;
-    } catch (_) {
-      return '알 수 없음';
+      final data = doc.data(); return (data?['name'] ?? '알 수 없음') as String;
+    } catch (_) { return '알 수 없음';
     }
   }
+
 
   /// 로컬에 투두 추가 (정렬 유지)
   void addTodo({

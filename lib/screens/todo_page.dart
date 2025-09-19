@@ -188,43 +188,34 @@ class _TodoPageState extends State<TodoPage> {
       );
     }
 
-    return FutureBuilder<Map<String, String>>(
-      future: _loadUserNames(todos), // 🔹 UID → name 변환
-      builder: (context, snapshot) {
-        final nameMap = snapshot.data ?? {};
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      itemCount: todos.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final todo = todos[index];
+        final DateTime? dt = todo['date'] as DateTime?;
+        final timeStr = (dt != null) ? DateFormat.Hm().format(dt) : '시간 미정';
 
-        return ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          itemCount: todos.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final todo = todos[index];
-            final DateTime? dt = todo['date'] as DateTime?;
-            final timeStr =
-            (dt != null) ? DateFormat.Hm().format(dt) : '시간 미정';
+        final bool isTop = index == 0;
 
-            final bool isTop = index == 0;
+        // ✅ 여기서 바로 Provider가 resolve 해둔 name 사용
+        final assignedName = todo['assignedToName'] as String? ?? '알 수 없음';
 
-            final assignedUid = todo['assignedTo'] as String?;
-            final assignedName = nameMap[assignedUid] ?? '알 수 없음';
-
-            return _TodoTile(
-              time: timeStr,
-              title: todo['title'] ?? '제목 없음',
-              content: '$assignedName에게 배정됨',
-              location: '장소 없음',
-              parent: assignedName,
-              highlightTitle: isTop,
-            );
-          },
+        return _TodoTile(
+          time: timeStr,
+          title: todo['title'] ?? '제목 없음',
+          content: '$assignedName에게 배정됨',
+          location: '장소 없음',
+          parent: assignedName,
+          highlightTitle: isTop,
         );
       },
     );
   }
 
-  /// UID → name 변환
-  Future<Map<String, String>> _loadUserNames(
-      List<Map<String, dynamic>> todos) async {
+
+  Future<Map<String, String>> _loadUserNames(List<Map<String, dynamic>> todos) async {
     final db = FirebaseFirestore.instance;
     final uids = todos
         .map((t) => t['assignedTo'] as String?)
@@ -232,14 +223,33 @@ class _TodoPageState extends State<TodoPage> {
         .toSet();
 
     final result = <String, String>{};
+
     for (final uid in uids) {
-      final doc = await db.collection('users').doc(uid).get();
-      if (doc.exists) {
-        result[uid] = doc['name'] as String? ?? '알 수 없음';
+      try {
+        final docRef = db.collection('users').doc(uid);  // ✅ 무조건 users 루트
+        final doc = await docRef.get();
+
+        if (doc.exists) {
+          final data = doc.data();
+          print("📌 불러온 유저 $uid : $data"); // 디버깅용
+          if (data != null && data.containsKey('name')) {
+            result[uid] = data['name'] as String;
+          } else {
+            result[uid] = '이름 없음';
+          }
+        } else {
+          print("❌ users/$uid 문서 없음");
+          result[uid] = '문서 없음';
+        }
+      } catch (e) {
+        print("🔥 유저 이름 불러오기 실패 ($uid): $e");
+        result[uid] = '에러';
       }
     }
     return result;
   }
+
+
 }
 
 /// 내부 전용 타일
