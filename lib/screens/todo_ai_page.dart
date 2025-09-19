@@ -144,14 +144,17 @@ class _TodoAiPageState extends State<TodoAiPage> {
       final spouseUid = userData?['spouseUid'] as String?;
 
       // ✅ 투두만 저장 (이벤트 생성 X → 투두 화면 중복 방지)
+      // 🔹 assignedToUid를 확정 (me → 내 uid, partner → 배우자 uid)
+      final assignedToUid = (assignedTo == 'me') ? uid : (spouseUid ?? uid);
+
       final String todoId = await TodoRepo().saveTodo(
         title: title,
         start: start,
         end: end,
-        assignedTo: assignedTo,
-        spouseUid: spouseUid,
-        createEvent: false, // 중요!!
+        assignedToUid: assignedToUid, // ✅ 이제 UID만 넘김
+        createEvent: false,
       );
+
 
       // 로컬 Provider 반영
       context.read<TodoProvider>().addTodo(
@@ -394,6 +397,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 const SizedBox(height: 12),
 
                 // 수정 후 저장
+                // 수정 후 저장
                 ElevatedButton(
                   onPressed: () {
                     final todoText = _controller.text.trim();
@@ -401,22 +405,20 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                       ),
                       builder: (context) => AddScheduleBottomScreen(
                         title: '추천된 일정을 수정해서 추가해볼까요?',
                         initialTitle: todoText,
-                        initialStartTime:
-                        TimeOfDay.fromDateTime(_suggestion!.start),
+                        initialStartTime: TimeOfDay.fromDateTime(_suggestion!.start),
                         initialEndTime: TimeOfDay.fromDateTime(_suggestion!.end),
                         initialDays: {
                           DateFormat.E('ko_KR').format(_suggestion!.start)
                         },
+                        initialAssignedTo: _suggestion!.assignedTo, // 🔹 기본 할당자 전달
                         onScheduleAdded: (updatedSchedule) async {
                           final String newTitle =
-                              (updatedSchedule['title'] ?? todoText)?.toString() ??
-                                  todoText;
+                          (updatedSchedule['title'] ?? todoText).toString();
 
                           final DateTime start =
                           (updatedSchedule['start'] is DateTime)
@@ -427,11 +429,15 @@ class _TodoAiPageState extends State<TodoAiPage> {
                               ? updatedSchedule['end']
                               : _suggestion!.end;
 
+                          final String newAssignedTo =
+                              updatedSchedule['assignedTo'] as String? ??
+                                  _suggestion!.assignedTo; // 🔹 선택된 할당자 반영
+
                           await _confirmSave(
                             title: newTitle,
                             start: start,
                             end: end,
-                            assignedTo: _suggestion!.assignedTo,
+                            assignedTo: newAssignedTo,
                           );
                           if (mounted) Navigator.pop(context);
                         },
@@ -454,6 +460,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ),
                   ),
                 ),
+
 
                 const SizedBox(height: 12),
 

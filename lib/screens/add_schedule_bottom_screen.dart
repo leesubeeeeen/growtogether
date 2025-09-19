@@ -7,6 +7,7 @@ class AddScheduleBottomScreen extends StatefulWidget {
   final TimeOfDay? initialStartTime;
   final TimeOfDay? initialEndTime;
   final Set<String>? initialDays;
+  final String? initialAssignedTo; // 🔹 'me' | 'partner'
   final String title;
 
   const AddScheduleBottomScreen({
@@ -15,6 +16,7 @@ class AddScheduleBottomScreen extends StatefulWidget {
     this.initialStartTime,
     this.initialEndTime,
     this.initialDays,
+    this.initialAssignedTo,
     this.title = '육아가 어려운 시간을 알려주세요',
     super.key,
   });
@@ -29,6 +31,7 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
   TimeOfDay? startTime;
   TimeOfDay? endTime;
   Set<String> selectedDays = {};
+  String assignedTo = 'me'; // 기본은 'me'
 
   final List<String> weekdays = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -46,6 +49,9 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
     }
     if (widget.initialDays != null) {
       selectedDays = Set.from(widget.initialDays!);
+    }
+    if (widget.initialAssignedTo != null) {
+      assignedTo = widget.initialAssignedTo!;
     }
   }
 
@@ -78,9 +84,10 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
 
     final newSchedule = {
       'title': titleController.text,
-      'start': startDateTime, // 🔥 DateTime으로 전달
+      'start': startDateTime,
       'end': endDateTime,
       'days': selectedDays.toList(),
+      'assignedTo': assignedTo, // 🔹 추가됨
     };
 
     widget.onScheduleAdded(newSchedule); // 콜백 실행
@@ -217,6 +224,37 @@ class _AddScheduleBottomScreenState extends State<AddScheduleBottomScreen> {
                   },
                 );
               }).toList(),
+            ),
+            const SizedBox(height: 24),
+            // 🔹 할당 대상 선택
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('누구에게 할당할까요?',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('나'),
+                    selected: assignedTo == 'me',
+                    onSelected: (val) {
+                      if (val) setState(() => assignedTo = 'me');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('배우자'),
+                    selected: assignedTo == 'partner',
+                    onSelected: (val) {
+                      if (val) setState(() => assignedTo = 'partner');
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             ElevatedButton(

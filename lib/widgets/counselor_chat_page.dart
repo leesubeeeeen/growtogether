@@ -98,14 +98,17 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
       final spouseUid = userData?['spouseUid'] as String?;
 
       // ✅ 투두만 저장 (이벤트 생성 X → 투두 화면 중복 방지)
+      // 🔹 assignedToUid를 확정 (me → 내 uid, partner → 배우자 uid)
+      final assignedToUid = (assignedTo == 'me') ? uid : (spouseUid ?? uid);
+
       final String todoId = await TodoRepo().saveTodo(
         title: title,
         start: start,
         end: end,
-        assignedTo: assignedTo,
-        spouseUid: spouseUid,
+        assignedToUid: assignedToUid, // ✅ 이제 UID만 넘김
         createEvent: false,
       );
+
 
       // 로컬에 즉시 넣는 대신 → 서버 권위로 재로딩(중복 표시 방지)
       await context.read<TodoProvider>().refreshForUser(uid);
