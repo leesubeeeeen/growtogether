@@ -3,23 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'add_schedule_bottom_screen.dart';
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
 import '../widgets/bottom_navi_bar.dart';
 
-import '../models/calendar_event.dart';
 import '../models/suggestion.dart';
-import '../services/assignment_engine.dart';
 import '../repos/user_repo.dart';
 import '../repos/event_repo.dart';
-import '../repos/config_repo.dart';
 import '../repos/todo_repo.dart';
+import '../repos/todo_ai_repo.dart';
 
-import '../providers/calendar_provider.dart';
 import '../providers/todo_provider.dart';
+
+import '../models/calendar_event.dart';
+
 
 class TodoAiPage extends StatefulWidget {
   const TodoAiPage({super.key});
@@ -41,41 +40,19 @@ class _TodoAiPageState extends State<TodoAiPage> {
     }
   }
 
-  Future<({
-  List<CalendarEvent> events,
-  Map<String, dynamic> emotion
-  })> _loadPartnerDataSafe(String? spouseUid, DateTime day) async {
-    try {
-      if (spouseUid == null || spouseUid.isEmpty) {
-        return (events: <CalendarEvent>[], emotion: {'fatigue': 0.0, 'feeling': '😐'});
-      }
-      final partnerDoc = await UserRepo().userDoc(spouseUid);
-      if (!partnerDoc.exists) {
-        return (events: <CalendarEvent>[], emotion: {'fatigue': 0.0, 'feeling': '😐'});
-      }
-      final events = await EventRepo().dayEvents(spouseUid, day);
-      final emotion = await UserRepo().todayEmotion(spouseUid, day);
-      return (events: events, emotion: emotion);
-    } on FirebaseException catch (e) {
-      debugPrint('⚠️ Partner load permission: ${e.code} ${e.message}');
-      return (events: <CalendarEvent>[], emotion: {'fatigue': 0.0, 'feeling': '😐'});
-    } catch (e) {
-      debugPrint('⚠️ Partner load error: $e');
-      return (events: <CalendarEvent>[], emotion: {'fatigue': 0.0, 'feeling': '😐'});
-    }
-  }
-
   Future<void> _onSubmit() async {
     final taskTitle = _controller.text.trim();
     if (taskTitle.isEmpty) return;
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _suggestion = null;
+    });
 
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
       final userRepo = UserRepo();
       final eventRepo = EventRepo();
-      final configRepo = ConfigRepo();
 
       final userDoc = await userRepo.userDoc(uid);
       final userData = userDoc.data() as Map<String, dynamic>?;
@@ -83,51 +60,57 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
       final today = DateTime.now();
 
-      // 내 데이터
-      final myEvents = await eventRepo.dayEvents(uid, today);
-      final myEmotion = await userRepo.todayEmotion(uid, today);
+      // 🔹 타입을 확실히 지정
+      final List<CalendarEvent> myEvents = await eventRepo.dayEvents(uid, today);
+      final Map<String, dynamic> myEmotion =
+      await userRepo.todayEmotion(uid, today);
 
-      // 배우자 데이터 (실패해도 빈값으로)
-      final partnerPack = await _loadPartnerDataSafe(spouseUid, today);
-      final partnerEvents = partnerPack.events;
-      final partnerEmotion = partnerPack.emotion;
+      final List<CalendarEvent> partnerEvents = spouseUid != null
+          ? await eventRepo.dayEvents(spouseUid, today)
+          : <CalendarEvent>[];
+      final Map<String, dynamic> partnerEmotion = spouseUid != null
+          ? await userRepo.todayEmotion(spouseUid, today)
+          : {'fatigue': 0.0, 'feeling': '😐'};
 
-      final messages = await configRepo.loadMessagesKo().catchError((_) => const {});
-      final slots = await configRepo.loadDefaultSlots().catchError((_) => const []);
-
-      final engine = AssignmentEngine(
-        myEvents: myEvents,
-        partnerEvents: partnerEvents,
-        myFatigue: (myEmotion['fatigue'] ?? 0).toDouble(),
-        partnerFatigue: (partnerEmotion['fatigue'] ?? 0).toDouble(),
+      // ✅ GPT 호출
+      final aiRepo = TodoAiRepo();
+      final result = await aiRepo.recommendTodo(
+        task: taskTitle,
+        mySchedule: myEvents.map((CalendarEvent e) => e.toJson()).toList(),
         myFeeling: myEmotion['feeling'] ?? '😐',
+        partnerSchedule:
+        partnerEvents.map((CalendarEvent e) => e.toJson()).toList(),
         partnerFeeling: partnerEmotion['feeling'] ?? '😐',
-        slots: slots,
-        messages: messages,
       );
 
-      final suggestion = engine.suggest(taskTitle, today);
+      if (result.isNotEmpty) {
+        final time = result['time'] ?? "08:00";
+        final parts = time.split(":");
+        final start = DateTime(today.year, today.month, today.day,
+            int.parse(parts[0]), int.parse(parts[1]));
+        final end = start.add(const Duration(hours: 1));
 
-      setState(() {
-        _suggestion = suggestion;
-        _loading = false;
-      });
-
-      if (suggestion == null && mounted) {
+        setState(() {
+          _suggestion = Suggestion(
+            message: result['reason'] ?? '추천 이유 없음',
+            start: start,
+            end: end,
+            assignedTo: result['assignedTo'] ?? 'me', slotLabel: '',
+          );
+          _loading = false;
+        });
+      } else {
+        setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('추천을 만들지 못했어요. 다른 표현으로 시도해 보세요.')),
+          const SnackBar(content: Text('추천을 만들지 못했어요.')),
         );
       }
     } catch (e, st) {
       debugPrint("❌ 추천 생성 에러: $e\n$st");
-      if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('추천 생성 중 오류: $e')),
-        );
-      }
+      setState(() => _loading = false);
     }
   }
+
 
   Future<void> _confirmSave({
     required String title,
@@ -143,18 +126,16 @@ class _TodoAiPageState extends State<TodoAiPage> {
       final userData = userDoc.data() as Map<String, dynamic>?;
       final spouseUid = userData?['spouseUid'] as String?;
 
-      // ✅ 투두만 저장 (이벤트 생성 X → 투두 화면 중복 방지)
-      // 🔹 assignedToUid를 확정 (me → 내 uid, partner → 배우자 uid)
+      // assignedTo → 실제 UID
       final assignedToUid = (assignedTo == 'me') ? uid : (spouseUid ?? uid);
 
       final String todoId = await TodoRepo().saveTodo(
         title: title,
         start: start,
         end: end,
-        assignedToUid: assignedToUid, // ✅ 이제 UID만 넘김
+        assignedToUid: assignedToUid,
         createEvent: false,
       );
-
 
       // 로컬 Provider 반영
       context.read<TodoProvider>().addTodo(
@@ -162,11 +143,10 @@ class _TodoAiPageState extends State<TodoAiPage> {
         title: title,
         date: start,
         done: false,
-        assignedToUid: assignedTo, // 🔹 UID 그대로 넣기
+        assignedToUid: assignedToUid,
       );
 
-
-      // 서버 권위로 동기화
+      // 서버 동기화
       await context.read<TodoProvider>().refreshForUser(uid);
 
       if (!mounted) return;
@@ -174,12 +154,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
         const SnackBar(content: Text('할 일이 추가되었어요!')),
       );
       Navigator.pop(context);
-    } on FirebaseException catch (e) {
-      debugPrint('❌ Firestore 저장 실패: ${e.code} ${e.message}');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('저장 실패(${e.code}): ${e.message}')),
-      );
     } catch (e, st) {
       debugPrint('❌ 저장 실패: $e\n$st');
       if (!mounted) return;
@@ -281,7 +255,28 @@ class _TodoAiPageState extends State<TodoAiPage> {
               ),
               const SizedBox(height: 24),
 
-              if (_loading) const Center(child: CircularProgressIndicator()),
+              if (_loading && _suggestion == null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 3)),
+                    ],
+                  ),
+                  child: Row(
+                    children: const [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 12),
+                      Text("AI가 추천을 준비하고 있어요..."),
+                    ],
+                  ),
+                ),
+              ],
 
               if (_suggestion != null) ...[
                 Text(
@@ -294,8 +289,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // 추천 박스
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -360,7 +353,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // 저장
                 ElevatedButton(
                   onPressed: () async {
                     final todoText = _controller.text.trim();
@@ -396,8 +388,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
                 const SizedBox(height: 12),
 
-                // 수정 후 저장
-                // 수정 후 저장
                 ElevatedButton(
                   onPressed: () {
                     final todoText = _controller.text.trim();
@@ -405,17 +395,20 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
                       ),
                       builder: (context) => AddScheduleBottomScreen(
                         title: '추천된 일정을 수정해서 추가해볼까요?',
                         initialTitle: todoText,
-                        initialStartTime: TimeOfDay.fromDateTime(_suggestion!.start),
-                        initialEndTime: TimeOfDay.fromDateTime(_suggestion!.end),
+                        initialStartTime:
+                        TimeOfDay.fromDateTime(_suggestion!.start),
+                        initialEndTime:
+                        TimeOfDay.fromDateTime(_suggestion!.end),
                         initialDays: {
                           DateFormat.E('ko_KR').format(_suggestion!.start)
                         },
-                        initialAssignedTo: _suggestion!.assignedTo, // 🔹 기본 할당자 전달
+                        initialAssignedTo: _suggestion!.assignedTo,
                         onScheduleAdded: (updatedSchedule) async {
                           final String newTitle =
                           (updatedSchedule['title'] ?? todoText).toString();
@@ -431,7 +424,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
 
                           final String newAssignedTo =
                               updatedSchedule['assignedTo'] as String? ??
-                                  _suggestion!.assignedTo; // 🔹 선택된 할당자 반영
+                                  _suggestion!.assignedTo;
 
                           await _confirmSave(
                             title: newTitle,
@@ -461,10 +454,8 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   ),
                 ),
 
-
                 const SizedBox(height: 12),
 
-                // 취소
                 ElevatedButton(
                   onPressed: () {
                     _controller.clear();

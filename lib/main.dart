@@ -29,6 +29,8 @@ import 'screens/settings_screen.dart';
 import 'firebase_options.dart';
 import 'widgets/auth_gate.dart';
 
+import 'package:dart_openai/dart_openai.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -52,6 +54,9 @@ Future<void> main() async {
 
   // 3) Intl
   await initializeDateFormatting('ko_KR', null);
+
+  await dotenv.load(fileName: ".env"); // 루트에 .env 파일 필요
+  OpenAI.apiKey = dotenv.env['OPENAI_API_KEY']!;
 
   runApp(const AppRoot());
 }

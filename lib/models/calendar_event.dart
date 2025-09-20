@@ -38,7 +38,7 @@ class CalendarEvent {
     }
   }
 
-  factory CalendarEvent.fromFirestore(doc) {
+  factory CalendarEvent.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return CalendarEvent(
       id: doc.id,
@@ -46,10 +46,25 @@ class CalendarEvent {
       content: data['content'] ?? '',
       location: data['location'] ?? '',
       parent: data['parent'] ?? '',
-      icon: data['icon'] ?? 'event', // String으로 저장됨
-      color: Colors.grey.shade200,
       start: (data['start'] as Timestamp).toDate(),
       end: (data['end'] as Timestamp).toDate(),
+      icon: data['icon'] ?? 'event',
+      color: Colors.blue,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'location': location,
+      'parent': parent,
+      'start': start.toIso8601String(),
+      'end': end.toIso8601String(),
+      'icon': icon,
+      'color': color.value.toRadixString(16),
+    };
+  }
+
 }

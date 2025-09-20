@@ -16,10 +16,11 @@ dependencies:
   table_calendar: ^3.0.9
   http: ^1.2.2
   provider: ^6.1.1
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^6.0.0
   firebase_core: ^4.1.0
   cloud_firestore: ^6.0.1
   firebase_auth: ^6.0.2
+  dart_openai: ^5.1.0   # 최신 버전 확인 필요
 
 
 flutter_intl:
