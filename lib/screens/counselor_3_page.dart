@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/counselor_chat_page.dart';
+import '../widgets//counselor_chat_page.dart';
 
 class Counselor3Page extends StatelessWidget {
   const Counselor3Page({super.key});
