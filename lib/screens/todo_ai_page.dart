@@ -1,4 +1,3 @@
-// file: lib/screens/todo_ai_page.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -16,12 +15,14 @@ import '../repos/todo_repo.dart';
 import '../repos/todo_ai_repo.dart';
 
 import '../providers/todo_provider.dart';
-
+import '../providers/calendar_provider.dart'; // ✅ 선택 날짜 fallback용
 import '../models/calendar_event.dart';
 
-
 class TodoAiPage extends StatefulWidget {
-  const TodoAiPage({super.key});
+  /// ✅ 선택 날짜. 전달 안 하면 CalendarProvider.selectedDate → DateTime.now() 순서로 fallback.
+  final DateTime? baseDate;
+
+  const TodoAiPage({super.key, this.baseDate});
 
   @override
   State<TodoAiPage> createState() => _TodoAiPageState();
@@ -29,8 +30,17 @@ class TodoAiPage extends StatefulWidget {
 
 class _TodoAiPageState extends State<TodoAiPage> {
   final TextEditingController _controller = TextEditingController();
-  Suggestion? _suggestion; // 추천 결과
+  Suggestion? _suggestion;
   bool _loading = false;
+
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  /// ✅ 실제로 사용할 기준 날짜
+  DateTime _effectiveBaseDate(BuildContext ctx) {
+    final cp = ctx.read<CalendarProvider?>();
+    final selected = cp?.selectedDate;
+    return _dateOnly(widget.baseDate ?? selected ?? DateTime.now());
+  }
 
   String _formatKo(DateTime dt) {
     try {
@@ -58,36 +68,35 @@ class _TodoAiPageState extends State<TodoAiPage> {
       final userData = userDoc.data() as Map<String, dynamic>?;
       final spouseUid = userData?['spouseUid'] as String?;
 
-      final today = DateTime.now();
+      // ✅ 오늘(now) 대신, 전달된/선택된 기준 날짜
+      final base = _effectiveBaseDate(context);
 
-      // 🔹 타입을 확실히 지정
-      final List<CalendarEvent> myEvents = await eventRepo.dayEvents(uid, today);
-      final Map<String, dynamic> myEmotion =
-      await userRepo.todayEmotion(uid, today);
+      final List<CalendarEvent> myEvents = await eventRepo.dayEvents(uid, base);
+      final Map<String, dynamic> myEmotion = await userRepo.todayEmotion(uid, base);
 
       final List<CalendarEvent> partnerEvents = spouseUid != null
-          ? await eventRepo.dayEvents(spouseUid, today)
+          ? await eventRepo.dayEvents(spouseUid, base)
           : <CalendarEvent>[];
       final Map<String, dynamic> partnerEmotion = spouseUid != null
-          ? await userRepo.todayEmotion(spouseUid, today)
+          ? await userRepo.todayEmotion(spouseUid, base)
           : {'fatigue': 0.0, 'feeling': '😐'};
 
-      // ✅ GPT 호출
       final aiRepo = TodoAiRepo();
       final result = await aiRepo.recommendTodo(
         task: taskTitle,
-        mySchedule: myEvents.map((CalendarEvent e) => e.toJson()).toList(),
+        mySchedule: myEvents.map((e) => e.toJson()).toList(),
         myFeeling: myEmotion['feeling'] ?? '😐',
-        partnerSchedule:
-        partnerEvents.map((CalendarEvent e) => e.toJson()).toList(),
+        partnerSchedule: partnerEvents.map((e) => e.toJson()).toList(),
         partnerFeeling: partnerEmotion['feeling'] ?? '😐',
       );
 
       if (result.isNotEmpty) {
         final time = result['time'] ?? "08:00";
         final parts = time.split(":");
-        final start = DateTime(today.year, today.month, today.day,
-            int.parse(parts[0]), int.parse(parts[1]));
+        final start = DateTime(
+          base.year, base.month, base.day,
+          int.parse(parts[0]), int.parse(parts[1]),
+        );
         final end = start.add(const Duration(hours: 1));
 
         setState(() {
@@ -95,7 +104,8 @@ class _TodoAiPageState extends State<TodoAiPage> {
             message: result['reason'] ?? '추천 이유 없음',
             start: start,
             end: end,
-            assignedTo: result['assignedTo'] ?? 'me', slotLabel: '',
+            assignedTo: result['assignedTo'] ?? 'me',
+            slotLabel: '',
           );
           _loading = false;
         });
@@ -111,7 +121,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
     }
   }
 
-
   Future<void> _confirmSave({
     required String title,
     required DateTime start,
@@ -121,12 +130,9 @@ class _TodoAiPageState extends State<TodoAiPage> {
     try {
       final uid = FirebaseAuth.instance.currentUser!.uid;
 
-      // spouseUid 조회
       final userDoc = await UserRepo().userDoc(uid);
       final userData = userDoc.data() as Map<String, dynamic>?;
       final spouseUid = userData?['spouseUid'] as String?;
-
-      // assignedTo → 실제 UID
       final assignedToUid = (assignedTo == 'me') ? uid : (spouseUid ?? uid);
 
       final String todoId = await TodoRepo().saveTodo(
@@ -137,7 +143,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
         createEvent: false,
       );
 
-      // 로컬 Provider 반영
       context.read<TodoProvider>().addTodo(
         id: todoId,
         title: title,
@@ -146,7 +151,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
         assignedToUid: assignedToUid,
       );
 
-      // 서버 동기화
       await context.read<TodoProvider>().refreshForUser(uid);
 
       if (!mounted) return;
@@ -163,8 +167,51 @@ class _TodoAiPageState extends State<TodoAiPage> {
     }
   }
 
+  Future<void> _saveOccurrencesBatch({
+    required String title,
+    required List<Map<String, DateTime>> occurrences, // [{start, end}, ...]
+    required String assignedTo,
+  }) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+
+      final userDoc = await UserRepo().userDoc(uid);
+      final userData = userDoc.data() as Map<String, dynamic>?;
+      final spouseUid = userData?['spouseUid'] as String?;
+      final assignedToUid = (assignedTo == 'me') ? uid : (spouseUid ?? uid);
+
+      final ids = await TodoRepo().saveTodosBatch(
+        title: title,
+        entries: occurrences
+            .map((e) => TodoBatchEntry(
+          start: e['start']!,
+          end: e['end']!,
+          assignedToUid: assignedToUid,
+        ))
+            .toList(),
+        createEvents: false,
+      );
+
+      await context.read<TodoProvider>().refreshForUser(uid);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${ids.length}개의 반복 할 일이 추가되었어요!')),
+      );
+      Navigator.pop(context);
+    } catch (e, st) {
+      debugPrint('❌ 배치 저장 실패: $e\n$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('반복 저장 중 오류: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final baseDate = _effectiveBaseDate(context); // ✅ 항상 유효한 기준 날짜
+
     return Scaffold(
       backgroundColor: Palette.background,
       body: SafeArea(
@@ -182,18 +229,10 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
+                      BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new,
-                    size: 18,
-                    color: Palette.mainRed,
-                  ),
+                  child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Palette.mainRed),
                 ),
               ),
               const SizedBox(height: 24),
@@ -225,11 +264,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
+                    BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
                   ],
                 ),
                 child: TextField(
@@ -246,8 +281,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       borderSide: BorderSide.none,
                     ),
                     isDense: true,
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     filled: false,
                   ),
                   onSubmitted: (_) => _onSubmit(),
@@ -255,17 +289,14 @@ class _TodoAiPageState extends State<TodoAiPage> {
               ),
               const SizedBox(height: 24),
 
-              if (_loading && _suggestion == null) ...[
+              if (_loading && _suggestion == null)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
-                      BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3)),
+                      BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
                     ],
                   ),
                   child: Row(
@@ -276,7 +307,6 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     ],
                   ),
                 ),
-              ],
 
               if (_suggestion != null) ...[
                 Text(
@@ -296,11 +326,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 6,
-                        offset: Offset(0, 3),
-                      ),
+                      BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
                     ],
                   ),
                   child: Column(
@@ -308,8 +334,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.lightbulb_outline,
-                              color: Palette.calmYellow),
+                          const Icon(Icons.lightbulb_outline, color: Palette.calmYellow),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -328,8 +353,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today,
-                              size: 16, color: Palette.mainRed),
+                          const Icon(Icons.calendar_today, size: 16, color: Palette.mainRed),
                           const SizedBox(width: 6),
                           Text(_formatKo(_suggestion!.start),
                               style: const TextStyle(fontSize: 14)),
@@ -338,8 +362,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.person,
-                              size: 16, color: Palette.mainRed),
+                          const Icon(Icons.person, size: 16, color: Palette.mainRed),
                           const SizedBox(width: 6),
                           Text(
                             _suggestion!.assignedTo == 'me' ? "나" : "배우자",
@@ -409,10 +432,36 @@ class _TodoAiPageState extends State<TodoAiPage> {
                           DateFormat.E('ko_KR').format(_suggestion!.start)
                         },
                         initialAssignedTo: _suggestion!.assignedTo,
+                        initialDate: baseDate, // ✅ 여기도 유효한 기준 날짜 사용
                         onScheduleAdded: (updatedSchedule) async {
                           final String newTitle =
                           (updatedSchedule['title'] ?? todoText).toString();
 
+                          // 반복(occurrences) → 배치 저장
+                          final occurrences = updatedSchedule['occurrences'];
+                          if (occurrences is List) {
+                            final list = <Map<String, DateTime>>[];
+                            for (final o in occurrences) {
+                              if (o is Map && o['start'] is DateTime && o['end'] is DateTime) {
+                                list.add({'start': o['start'], 'end': o['end']});
+                              }
+                            }
+                            final String newAssignedTo =
+                                updatedSchedule['assignedTo'] as String? ??
+                                    _suggestion!.assignedTo;
+
+                            if (list.isNotEmpty) {
+                              await _saveOccurrencesBatch(
+                                title: newTitle,
+                                occurrences: list,
+                                assignedTo: newAssignedTo,
+                              );
+                              if (mounted) Navigator.pop(context);
+                              return;
+                            }
+                          }
+
+                          // 단일 저장
                           final DateTime start =
                           (updatedSchedule['start'] is DateTime)
                               ? updatedSchedule['start']
@@ -470,7 +519,7 @@ class _TodoAiPageState extends State<TodoAiPage> {
                     minimumSize: const Size.fromHeight(48),
                   ),
                   child: const Text(
-                    '제가 직접할래요',
+                    '다시 입력할게요',
                     style: TextStyle(
                       fontFamily: AppFonts.primaryFont,
                       fontWeight: FontWeight.w400,

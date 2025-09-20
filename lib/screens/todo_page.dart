@@ -1,8 +1,8 @@
+// file: lib/screens/todo_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
@@ -100,11 +100,17 @@ class _TodoPageState extends State<TodoPage> {
             padding: const EdgeInsets.only(top: 24.0, right: 16.0),
             child: ElevatedButton(
               onPressed: () async {
+                // ✅ 선택 날짜를 TodoAiPage로 넘김
+                final baseDate = context.read<CalendarProvider>().selectedDate;
+
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const TodoAiPage()),
+                  MaterialPageRoute(
+                    builder: (context) => TodoAiPage(baseDate: baseDate),
+                  ),
                 );
-                // 돌아왔을 때 새로고침
+
+                // 돌아오면 새로고침
                 final uid = FirebaseAuth.instance.currentUser?.uid;
                 if (uid != null && mounted) {
                   await context.read<TodoProvider>().refreshForUser(uid);
@@ -115,8 +121,7 @@ class _TodoPageState extends State<TodoPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: Text(
                 '+ 계획 추가',
@@ -142,7 +147,6 @@ class _TodoPageState extends State<TodoPage> {
     );
   }
 
-  /// 상단 주간 캘린더 바
   Widget _buildCalendarBar(BuildContext context) {
     final calendar = context.watch<CalendarProvider>();
     final selectedDate = calendar.selectedDate;
@@ -175,7 +179,6 @@ class _TodoPageState extends State<TodoPage> {
     );
   }
 
-  /// 투두 리스트
   Widget _buildTodoList(BuildContext context) {
     final todos = context.watch<TodoProvider>().getTodosForSelectedDay();
 
@@ -197,10 +200,8 @@ class _TodoPageState extends State<TodoPage> {
         final DateTime? dt = todo['date'] as DateTime?;
         final timeStr = (dt != null) ? DateFormat.Hm().format(dt) : '시간 미정';
 
-        final bool isTop = index == 0;
-
-        // ✅ 여기서 바로 Provider가 resolve 해둔 name 사용
         final assignedName = todo['assignedToName'] as String? ?? '알 수 없음';
+        final bool isTop = index == 0;
 
         return _TodoTile(
           time: timeStr,
@@ -213,46 +214,8 @@ class _TodoPageState extends State<TodoPage> {
       },
     );
   }
-
-
-  Future<Map<String, String>> _loadUserNames(List<Map<String, dynamic>> todos) async {
-    final db = FirebaseFirestore.instance;
-    final uids = todos
-        .map((t) => t['assignedTo'] as String?)
-        .whereType<String>()
-        .toSet();
-
-    final result = <String, String>{};
-
-    for (final uid in uids) {
-      try {
-        final docRef = db.collection('users').doc(uid);  // ✅ 무조건 users 루트
-        final doc = await docRef.get();
-
-        if (doc.exists) {
-          final data = doc.data();
-          print("📌 불러온 유저 $uid : $data"); // 디버깅용
-          if (data != null && data.containsKey('name')) {
-            result[uid] = data['name'] as String;
-          } else {
-            result[uid] = '이름 없음';
-          }
-        } else {
-          print("❌ users/$uid 문서 없음");
-          result[uid] = '문서 없음';
-        }
-      } catch (e) {
-        print("🔥 유저 이름 불러오기 실패 ($uid): $e");
-        result[uid] = '에러';
-      }
-    }
-    return result;
-  }
-
-
 }
 
-/// 내부 전용 타일
 class _TodoTile extends StatelessWidget {
   final String time, title, content, location, parent;
   final bool highlightTitle;
@@ -271,7 +234,6 @@ class _TodoTile extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 왼쪽 시간
         SizedBox(
           width: 64,
           child: Text(
@@ -284,7 +246,6 @@ class _TodoTile extends StatelessWidget {
             ),
           ),
         ),
-        // 본문 카드
         Expanded(
           child: Container(
             decoration: BoxDecoration(
@@ -297,8 +258,7 @@ class _TodoTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.task_alt,
-                        size: 20, color: Palette.greyText),
+                    const Icon(Icons.task_alt, size: 20, color: Palette.greyText),
                     const SizedBox(width: 8),
                     Text(
                       title,
@@ -306,8 +266,7 @@ class _TodoTile extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         fontFamily: AppFonts.primaryFont,
-                        color:
-                        highlightTitle ? Palette.mainRed : Palette.greyText,
+                        color: highlightTitle ? Palette.mainRed : Palette.greyText,
                       ),
                     ),
                   ],
@@ -324,8 +283,7 @@ class _TodoTile extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.place_outlined,
-                        size: 14, color: Palette.greyText),
+                    const Icon(Icons.place_outlined, size: 14, color: Palette.greyText),
                     const SizedBox(width: 4),
                     Text(
                       location,
@@ -336,8 +294,7 @@ class _TodoTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(Icons.person,
-                        size: 14, color: Palette.greyText),
+                    const Icon(Icons.person, size: 14, color: Palette.greyText),
                     const SizedBox(width: 4),
                     Text(
                       parent,

@@ -332,6 +332,7 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
                       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                     ),
                     builder: (context) => AddScheduleBottomScreen(
+                      title: '추천된 일정을 수정해서 추가해볼까요?', // ✅ 필수 파라미터 추가
                       onScheduleAdded: (updated) async {
                         DateTime? start = updated['start'] is DateTime
                             ? updated['start']
@@ -356,6 +357,7 @@ class _CounselorChatPageState extends State<CounselorChatPage> {
                       initialEndTime: const TimeOfDay(hour: 9, minute: 30),
                       initialDays: {"월"},
                     ),
+
                   );
                 },
                 onDismiss: () => setState(() => _showPopup = false),
