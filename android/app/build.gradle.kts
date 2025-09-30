@@ -19,7 +19,7 @@ val keystoreProps: Properties = Properties().also { props ->
 }
 
 android {
-    namespace = "com.example.growtogether"
+    namespace = "com.cnu.growtogether"
     compileSdk = flutter.compileSdkVersion
 
     compileOptions {
@@ -29,7 +29,7 @@ android {
     kotlinOptions { jvmTarget = JavaVersion.VERSION_11.toString() }
 
     defaultConfig {
-        applicationId = "com.example.growtogether"
+        applicationId = "com.cnu.growtogether"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
