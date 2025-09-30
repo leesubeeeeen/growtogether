@@ -1,44 +1,68 @@
+// 🔹 반드시 파일 최상단(plugins 블록보다 위)에 import
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("dev.flutter.flutter-gradle-plugin")  // ← 필수
+    id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
+}
+
+// 🔐 keystore.properties 로드
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps: Properties = Properties().also { props ->
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.inputStream().use { fis ->
+            props.load(fis)   // ← 스코프 충돌 없이 안전
+        }
+    }
 }
 
 android {
     namespace = "com.example.growtogether"
     compileSdk = flutter.compileSdkVersion
-    //ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+    kotlinOptions { jvmTarget = JavaVersion.VERSION_11.toString() }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.growtogether"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (!keystoreProps.isEmpty) {
+                val store = requireNotNull(keystoreProps.getProperty("storeFile")) { "missing storeFile" }
+                val storePass = requireNotNull(keystoreProps.getProperty("storePassword")) { "missing storePassword" }
+                val alias = requireNotNull(keystoreProps.getProperty("keyAlias")) { "missing keyAlias" }
+                val keyPass = requireNotNull(keystoreProps.getProperty("keyPassword")) { "missing keyPassword" }
+
+                storeFile = file(store)
+                storePassword = storePass
+                keyAlias = alias
+                keyPassword = keyPass
+            }
+        }
+    }
+
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
 
-flutter {
-    source = "../.."
-}
+flutter { source = "../.." }
