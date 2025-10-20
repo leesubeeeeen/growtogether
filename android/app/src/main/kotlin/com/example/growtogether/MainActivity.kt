@@ -1,4 +1,4 @@
-package com.example.growtogether
+package com.cnu.growtogether
 
 import io.flutter.embedding.android.FlutterActivity
 

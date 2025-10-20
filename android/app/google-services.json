@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "579367707927",
-    "project_id": "growtogether-89f1a",
-    "storage_bucket": "growtogether-89f1a.firebasestorage.app"
+    "project_number": "828794375077",
+    "project_id": "eomao-dc47e",
+    "storage_bucket": "eomao-dc47e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:579367707927:android:8632dabeb1e7e971c5c352",
+        "mobilesdk_app_id": "1:828794375077:android:c9e5c4e6c170bea160b64c",
         "android_client_info": {
           "package_name": "com.cnu.growtogether"
         }
@@ -15,26 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDtWCfXiYPENVbsLZMHa7Trdf46MhLihVg"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:579367707927:android:299afd331f7e0732c5c352",
-        "android_client_info": {
-          "package_name": "com.example.growtogether"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDtWCfXiYPENVbsLZMHa7Trdf46MhLihVg"
+          "current_key": "AIzaSyCWpe_q5173mXVKBpPaC6_wyHemA42gkzI"
         }
       ],
       "services": {
