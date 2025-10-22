@@ -1,15 +1,44 @@
-gradle-wrapper.jar
-/.gradle
-/captures/
-/gradlew
-/gradlew.bat
-/local.properties
-GeneratedPluginRegistrant.java
+# ===== Core IDE/Project =====
+*.iml
+.idea/
+.gradle/
+build/
+**/build/
 .cxx/
 
-# Remember to never publicly share your keystore.
-# See https://flutter.dev/to/reference-keystore
+# ===== Android / Gradle =====
+# 반드시 커밋해야 하는 파일(gradlew, wrapper)은 ignore 금지!
+# gradle wrapper jar와 스크립트는 커밋 대상
+!gradlew
+!gradlew.bat
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# 일반적으로 무시할 것
+/local.properties
+/captures/
+
+# ===== Flutter / Dart =====
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.melodic
+# Flutter 앱은 보통 pubspec.lock 커밋 권장(패키지라면 제외)
+/# pubspec.lock
+
+# Flutter generated
+**/GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.swift
+
+# ===== Secrets & Env =====
+.env
+.env.*
+secrets.properties
 key.properties
 **/*.keystore
 **/*.jks
-.env
+
+# ===== OS / Misc =====
+.DS_Store
+Thumbs.db
