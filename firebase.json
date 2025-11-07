@@ -1,1 +1,19 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"eomao-dc47e","appId":"1:828794375077:android:c9e5c4e6c170bea160b64c","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"eomao-dc47e","configurations":{"android":"1:828794375077:android:c9e5c4e6c170bea160b64c","ios":"1:828794375077:ios:eb9b424f9b48992e60b64c","macos":"1:828794375077:ios:6784d14993a7582060b64c","web":"1:828794375077:web:2938e5d347401f0e60b64c","windows":"1:828794375077:web:f69b36459ac8823660b64c"}}}}}}
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["**/.*", "**/node_modules/**"],
+    "rewrites": [
+      { "source": "/api{,/**}", "function": "api" },
+      { "source": "**", "destination": "/index.html" }
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, max-age=0" }
+        ]
+      }
+    ]
+  },
+  "functions": { "source": "functions", "runtime": "nodejs20" }
+}

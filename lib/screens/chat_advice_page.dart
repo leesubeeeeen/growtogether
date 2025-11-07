@@ -1,12 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../theme/palette.dart';
 import '../theme/fonts.dart';
-import 'dart:async';
 import '../widgets/bottom_navi_bar.dart';
 
 class ChatAdvicePage extends StatefulWidget {
   const ChatAdvicePage({super.key});
-
   @override
   State<ChatAdvicePage> createState() => _ChatAdvicePageState();
 }
@@ -14,10 +14,12 @@ class ChatAdvicePage extends StatefulWidget {
 class _ChatAdvicePageState extends State<ChatAdvicePage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
   final List<ChatMessage> _messages = [];
 
-  void _sendMessage(String text) {
+  static const String _base =
+  String.fromEnvironment('API_BASE', defaultValue: '/api');
+
+  Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
     setState(() {
@@ -26,33 +28,47 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
     _controller.clear();
     _scrollToBottom();
 
-    Future.delayed(const Duration(milliseconds: 600), () {
+    try {
+      final payload = {
+        'model': 'gpt-4o-mini',
+        'messages': [
+          {'role': 'system', 'content': '친절한 상담 선생님처럼 짧고 따뜻하게 한국어로 답해줘.'},
+          {'role': 'user', 'content': text}
+        ]
+      };
+      final r = await http.post(
+        Uri.parse('$_base/openai/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+      String reply = '잠시 후 다시 시도해 주세요.';
+      if (r.statusCode >= 200 && r.statusCode < 300) {
+        final json = jsonDecode(r.body) as Map<String, dynamic>;
+        reply = json['choices']?[0]?['message']?['content']?.toString()
+            ?? reply;
+      } else {
+        reply = '오류: ${r.statusCode}';
+      }
+      if (!mounted) return;
       setState(() {
-        _messages.add(ChatMessage(
-          text: _getDummyReply(text),
-          isUser: false,
-        ));
+        _messages.add(ChatMessage(text: reply, isUser: false));
       });
       _scrollToBottom();
-    });
-  }
-
-  String _getDummyReply(String input) {
-    if (input.contains('언제 걷나요')) {
-      return '보통 9~18개월 사이에 걷기 시작해요!';
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: '네트워크 오류: $e', isUser: false));
+      });
+      _scrollToBottom();
     }
-    if (input.contains('병원')) {
-      return '걱정이 되신다면 소아과에서 상담 받아보는 것도 좋아요.';
-    }
-    return '좋은 질문이에요. 조금 더 자세히 알려주실 수 있나요?';
   }
 
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 80), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent + 60,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 240),
           curve: Curves.easeOut,
         );
       }
@@ -74,29 +90,23 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
+                BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
               ],
             ),
-            child: const Icon(Icons.arrow_back_ios_new,
-                size: 18, color: Palette.black),
+            child: const Icon(Icons.arrow_back_ios_new, size: 18, color: Palette.black),
           ),
         ),
         title: Row(
           children: [
             const CircleAvatar(
               radius: 16,
-              backgroundImage: AssetImage('assets/avatar_doctor.png'), // 네 이미지로 변경
+              backgroundImage: AssetImage('assets/avatar_doctor.png'),
             ),
             const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text(
-                  '차분한 상담선생님',
+                Text('차분한 상담선생님',
                   style: TextStyle(
                     fontFamily: AppFonts.primaryFont,
                     fontSize: 14,
@@ -104,10 +114,7 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
                     color: Palette.black,
                   ),
                 ),
-                Text(
-                  '• Online',
-                  style: TextStyle(fontSize: 12, color: Colors.green),
-                ),
+                Text('• Online', style: TextStyle(fontSize: 12, color: Colors.green)),
               ],
             ),
           ],
@@ -123,27 +130,16 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
               itemBuilder: (context, index) {
                 final msg = _messages[index];
                 return Align(
-                  alignment: msg.isUser
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
+                  alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     constraints: const BoxConstraints(maxWidth: 280),
                     decoration: BoxDecoration(
-                      color: msg.isUser
-                          ? Colors.white
-                          : Palette.softRed,
+                      color: msg.isUser ? Colors.white : Palette.softRed,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: msg.isUser
-                          ? []
-                          : [
-                        const BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
+                      boxShadow: msg.isUser ? [] : [
+                        const BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
                       ],
                     ),
                     child: Text(
@@ -160,19 +156,11 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
               },
             ),
           ),
-
-          // 입력창
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: Offset(0, -2),
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
             ),
             child: Row(
               children: [
@@ -182,14 +170,13 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
                     onSubmitted: _sendMessage,
                     decoration: InputDecoration(
                       hintText: '궁금한 점을 뭐든지 물어보세요',
-                      hintStyle: TextStyle(
+                      hintStyle: const TextStyle(
                         color: Palette.greyText,
                         fontFamily: AppFonts.primaryFont,
                       ),
                       filled: true,
                       fillColor: const Color(0xFFF2F2F2),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none,
@@ -204,7 +191,7 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
       bottomNavigationBar: buildBottomNavBar(context, 3),
@@ -215,6 +202,5 @@ class _ChatAdvicePageState extends State<ChatAdvicePage> {
 class ChatMessage {
   final String text;
   final bool isUser;
-
   ChatMessage({required this.text, required this.isUser});
 }

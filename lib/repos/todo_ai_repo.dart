@@ -1,7 +1,22 @@
 import 'dart:convert';
-import 'package:dart_openai/dart_openai.dart';
+import 'package:http/http.dart' as http;
 
+/// Firebase Functions 프록시를 통해 안전하게 OpenAI에 요청.
+/// - 웹 번들에 키가 포함되지 않음
+/// - 동일한 페이로드 구조( model + messages ) 유지
 class TodoAiRepo {
+  static const String _base =
+  String.fromEnvironment('API_BASE', defaultValue: '/api');
+
+  /// 입력:
+  /// - task: 사용자 입력 텍스트
+  /// - mySchedule / partnerSchedule: List<Map> (CalendarEvent.toJson())
+  /// - myFeeling / partnerFeeling: 😀 같은 이모지/텍스트
+  ///
+  /// 출력(Map):
+  /// - time: "HH:mm"
+  /// - reason: "문장"
+  /// - assignedTo: "me" | "partner"
   Future<Map<String, dynamic>> recommendTodo({
     required String task,
     required List<Map<String, dynamic>> mySchedule,
@@ -9,14 +24,8 @@ class TodoAiRepo {
     required List<Map<String, dynamic>> partnerSchedule,
     required String partnerFeeling,
   }) async {
-    // ✅ OpenAIChat.create 로 호출
-    final OpenAIChatCompletionModel response =  await OpenAI.instance.chat.create(   // ✅ 여기!
-      model: "gpt-4o-mini",
-      messages: [
-        OpenAIChatCompletionChoiceMessageModel(
-          role: OpenAIChatMessageRole.system, // ✅ enum 사용
-          content: [
-            OpenAIChatCompletionChoiceMessageContentItemModel.text("""
+    // 1) 시스템 프롬프트
+    const systemPrompt = '''
 너는 육아 일정 비서야.
 규칙:
 1. 아침(06:00~09:00) → 기상, 아침밥, 등원, 출근 준비
@@ -33,31 +42,62 @@ class TodoAiRepo {
   "time": "HH:mm",
   "reason": "설명"
 }
-"""),
-          ],
-        ),
-        OpenAIChatCompletionChoiceMessageModel(
-          role: OpenAIChatMessageRole.user,
-          content: [
-            OpenAIChatCompletionChoiceMessageContentItemModel.text("""
-오늘 내 일정: $mySchedule
-오늘 내 기분: $myFeeling
-배우자 일정: $partnerSchedule
-배우자 기분: $partnerFeeling
-추천받고 싶은 태스크: $task
-"""),
-          ],
-        ),
+''';
+
+    // 2) 사용자 프롬프트(일정/감정/요청 태스크를 JSON으로 전달)
+    final userPayload = jsonEncode({
+      'task': task,
+      'mySchedule': mySchedule,
+      'myFeeling': myFeeling,
+      'partnerSchedule': partnerSchedule,
+      'partnerFeeling': partnerFeeling,
+    });
+
+    // 3) Chat Completions 페이로드
+    final payload = {
+      'model': 'gpt-4o-mini',
+      'messages': [
+        {'role': 'system', 'content': systemPrompt},
+        {'role': 'user', 'content': userPayload},
       ],
+    };
+
+    // 4) 프록시 호출
+    final resp = await http.post(
+      Uri.parse('$_base/openai/chat'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
     );
 
-    final raw = response.choices.first.message.content?.first.text ?? "{}";
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw Exception('proxy ${resp.statusCode}: ${resp.body}');
+    }
+
+    // 5) 응답 파싱
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final content = body['choices']?[0]?['message']?['content']?.toString() ?? '{}';
+
+    // 모델이 코드블록/텍스트를 섞어줄 수 있어 안전 파싱
+    final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(content);
+    final jsonStr = jsonMatch != null ? jsonMatch.group(0)! : content;
 
     try {
-      return jsonDecode(raw) as Map<String, dynamic>;
-    } catch (e) {
-      print("❌ JSON 파싱 실패: $raw");
-      return {};
+      final parsed = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final assignedTo = (parsed['assignedTo'] ?? 'me').toString();
+      final time = (parsed['time'] ?? '08:00').toString();
+      final reason = (parsed['reason'] ?? '기본 추천').toString();
+      return {
+        'assignedTo': assignedTo,
+        'time': time,
+        'reason': reason,
+      };
+    } catch (_) {
+      // 파싱 실패 시 기본값
+      return {
+        'assignedTo': 'me',
+        'time': '08:00',
+        'reason': '기본 추천',
+      };
     }
   }
 }

@@ -1,3 +1,6 @@
+// lib/main.dart
+import 'dart:ui' as ui; // 전역 에러 핸들러용
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // kIsWeb
 import 'package:provider/provider.dart';
@@ -29,34 +32,46 @@ import 'screens/settings_screen.dart';
 import 'firebase_options.dart';
 import 'widgets/auth_gate.dart';
 
-import 'package:dart_openai/dart_openai.dart';
+/// 🔧 빌드 타임 환경값(비밀 아님): 웹/네이티브 공통 API 베이스
+/// flutter build 시 --dart-define=API_BASE=/api 로 주입(미주입 시 기본값 /api)
+const apiBase = String.fromEnvironment('API_BASE', defaultValue: '/api');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1) Firebase
+  // 🔥 전역 에러 핸들러 (릴리스 빌드에서 원인 추적용)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.dumpErrorToConsole(details);
+  };
+  ui.PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    // ignore: avoid_print
+    print('🔥 Uncaught: $error\n$stack');
+    return true;
+  };
+
+  // 1) Firebase 초기화 (web 포함)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 2) .env (웹에서는 건너뜀)
-  try {
-    if (!kIsWeb) {
-      await dotenv.load(fileName: ".env");
-      // 필요 시 로그 확인
-      // ignore: avoid_print
-      print("✅ .env 로드 성공: ${dotenv.env['OPENAI_API_KEY']}");
-    }
-  } catch (e) {
-    // ignore: avoid_print
-    print("⚠️ .env 로드 실패: $e");
-  }
-
-  // 3) Intl
+  // 2) Intl (ko_KR 로케일)
   await initializeDateFormatting('ko_KR', null);
 
-  await dotenv.load(fileName: ".env"); // 루트에 .env 파일 필요
-  OpenAI.apiKey = dotenv.env['OPENAI_API_KEY']!;
+  // 3) .env는 "웹이 아닐 때만" 로드 (네이티브 로컬 개발용)
+  if (!kIsWeb) {
+    try {
+      await dotenv.load(fileName: ".env");
+      // 필요 시 네이티브에서 dotenv로 불러온 키를 사용 (웹에서는 절대 사용 금지)
+      // final openaiKey = dotenv.env['OPENAI_API_KEY'];
+      // if (openaiKey != null && openaiKey.isNotEmpty) { ... }
+    } catch (_) {
+      // 개발 편의를 위한 무시 (크래시 금지)
+    }
+  }
+
+  // 4) 빌드 타임 주입값 확인(브라우저 Console에 찍힘)
+  // ignore: avoid_print
+  print('API_BASE = $apiBase');
 
   runApp(const AppRoot());
 }
